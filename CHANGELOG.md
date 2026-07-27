@@ -11,3 +11,6 @@ Versioning, sobald die erste veröffentlichte Version existiert.
 - initiales Monorepo-Grundgerüst
 - Architektur-, Plugin-, Profil-, Deployment- und Sicherheitsdokumentation
 - Grundgerüst des Plugins `twin-fpv-sub250`
+- vorbereitete LXC-Skripte für Installation, Updates und
+  Admin-Passwort-Zurücksetzung
+- anfängertaugliche Setup- und Git-Anleitung

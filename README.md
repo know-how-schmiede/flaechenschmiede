@@ -71,6 +71,7 @@ Millimetern, Massen in Gramm und Winkel in Grad gespeichert.
 │   └── src/
 ├── plugins/
 │   └── twin-fpv-sub250/      # Erstes Geometrie-Plugin
+├── setup/                    # Installation, Updates und Administration im LXC
 └── tests/
     ├── fixtures/
     └── integration/
@@ -111,6 +112,7 @@ dient `.env.example`; echte Geheimnisse dürfen nicht committed werden.
 - [Plugin-Entwicklung](docs/plugin-development.md)
 - [Profilformat](docs/airfoil-format.md)
 - [Proxmox-Deployment](docs/deployment-proxmox.md)
+- [Setup für Einsteiger](setup/setup.md)
 - [Sicherheitsgrundsätze](docs/security.md)
 - [Änderungshistorie](CHANGELOG.md)
 
