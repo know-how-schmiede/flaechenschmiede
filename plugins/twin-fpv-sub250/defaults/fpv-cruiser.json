@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "name": "FPV Cruiser",
+  "parameters": {
+    "wing": {
+      "spanMm": 900,
+      "rootChordMm": 190,
+      "tipChordMm": 140,
+      "sweepDeg": 5,
+      "dihedralDeg": 2
+    },
+    "weight": {
+      "targetG": 249,
+      "reserveG": 10
+    }
+  }
+}

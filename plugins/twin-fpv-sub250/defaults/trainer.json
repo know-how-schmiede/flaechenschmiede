@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "name": "Trainer",
+  "parameters": {
+    "wing": {
+      "spanMm": 800,
+      "rootChordMm": 180,
+      "tipChordMm": 140,
+      "sweepDeg": 0,
+      "dihedralDeg": 3
+    },
+    "weight": {
+      "targetG": 249,
+      "reserveG": 15
+    }
+  }
+}

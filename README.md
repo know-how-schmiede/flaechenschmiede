@@ -1,2 +1,128 @@
-# flaechenschmiede
-FlÃ¤chenSchmiede ist eine modulare, webbasierte Konstruktionshilfe fÃ¼r einfache RC-Flugmodelle. Flugzeugparameter werden direkt im Browser eingestellt und unmittelbar als 2D- und 3D-Modell dargestellt. Aus dem Entwurf sollen anschlieÃŸend maÃŸstÃ¤bliche PDF- und SVG-Bauvorlagen erzeugt werden kÃ¶nnen.
+# FlächenSchmiede
+
+FlächenSchmiede ist eine modulare, webbasierte Konstruktionshilfe für
+parametrische RC-Flugmodelle. Flugzeugparameter werden im Browser eingestellt,
+unmittelbar als 2D- und 3D-Modell dargestellt und anschließend als
+maßstäbliche PDF- und SVG-Bauunterlagen exportiert.
+
+Der erste Anwendungsfall ist ein einfacher zweimotoriger FPV-Flieger mit einem
+Zielgewicht unter 250 g. Weitere Modelltypen werden über vertrauenswürdige,
+serverseitig installierte Geometrie-Plugins ergänzt.
+
+> **Projektstatus:** frühe Projektphase / Grundgerüst. Die Anwendung ist noch
+> nicht lauffähig.
+
+## Ziele des MVP
+
+- Benutzerkonten, Rollen und persönliche Projekte
+- versionierte, deklarative Geometrie-Plugins
+- klassische Tragflächenprofile sowie parametrische KFm1-, KFm2- und
+  KFm4-Profile
+- reaktive 2D- und 3D-Vorschau
+- geometrische und gewichtsbezogene Berechnungen
+- strukturierte Hinweise, Empfehlungen, Warnungen und Fehler
+- maßstäbliche Exporte als PDF und SVG
+- reproduzierbarer Betrieb in einem Debian-LXC unter Proxmox
+
+Berechnete Werte sind Konstruktionshilfen. Sie stellen keine Garantie für
+Flugtauglichkeit oder Betriebssicherheit dar.
+
+## Technischer Ansatz
+
+| Bereich | Vorgesehene Technologien |
+| --- | --- |
+| Frontend | React, TypeScript, Vite, Material UI, React Three Fiber |
+| Backend | Python 3.12+, FastAPI, Pydantic, SQLAlchemy 2, Alembic |
+| Geometrie | NumPy, Shapely, trimesh |
+| Export | ReportLab, svgwrite |
+| Datenbank | PostgreSQL |
+| Betrieb | Nginx, systemd und/oder Docker Compose |
+
+Die REST-API wird unter `/api/v1` versioniert. Längen werden intern in
+Millimetern, Massen in Gramm und Winkel in Grad gespeichert.
+
+## Repository-Struktur
+
+```text
+.
+├── airfoils/                 # Vom Geometrie-Plugin getrennte Profilbibliothek
+│   ├── conventional/         # Klassische Koordinatenprofile
+│   └── kfm/                  # Parametrische KF-Profildefinitionen
+├── backend/
+│   ├── app/
+│   │   ├── airfoils/         # Profilverwaltung und -generierung
+│   │   ├── api/              # Versionierte HTTP-Endpunkte
+│   │   ├── auth/             # Anmeldung, Sitzungen und Rechte
+│   │   ├── core/             # Konfiguration und Querschnittsfunktionen
+│   │   ├── exporters/        # PDF-, SVG- und JSON-Ausgabe
+│   │   ├── geometry/         # Framework-unabhängige Geometrie
+│   │   ├── models/           # SQLAlchemy-Modelle
+│   │   ├── plugins/          # Plugin-Lader und Verträge
+│   │   └── schemas/          # Pydantic- und API-Schemas
+│   ├── migrations/           # Alembic-Migrationen
+│   └── tests/                # Backend-Tests
+├── deployment/
+│   ├── nginx/
+│   ├── scripts/
+│   └── systemd/
+├── docs/                     # Architektur- und Betriebsdokumentation
+├── frontend/
+│   ├── public/
+│   └── src/
+├── plugins/
+│   └── twin-fpv-sub250/      # Erstes Geometrie-Plugin
+└── tests/
+    ├── fixtures/
+    └── integration/
+```
+
+Die Verzeichnisse enthalten Platzhalter, bis die jeweilige Entwicklungsphase
+beginnt. Das Plugin-Grundgerüst enthält bereits ein Manifest, ein
+Parameterschema und zwei Preset-Dateien.
+
+## Lokale Entwicklung
+
+Die Entwicklungsumgebung wird in Phase 0 eingerichtet. Geplant sind:
+
+1. PostgreSQL über `compose.yaml` starten.
+2. Backend-Abhängigkeiten aus `backend/pyproject.toml` installieren.
+3. Datenbankmigrationen ausführen und FastAPI starten.
+4. Frontend-Abhängigkeiten aus `frontend/package.json` installieren und Vite
+   starten.
+
+Konfiguration erfolgt ausschließlich über Umgebungsvariablen. Als Vorlage
+dient `.env.example`; echte Geheimnisse dürfen nicht committed werden.
+
+## Entwicklungsphasen
+
+1. **Projektfundament:** Entwicklungsumgebung, FastAPI, React, PostgreSQL,
+   Migrationen, Tests, CI, Anmeldung und Rollen
+2. **Profilsystem:** Datenmodell, Import, klassische Profile und KFm-Generatoren
+3. **Geometrie-Plugin:** Plugin-Lader, `twin-fpv-sub250`, Berechnungen,
+   Validierung und 2D-Vorschau
+4. **3D-Vorschau:** React Three Fiber, Ansichten und Performance
+5. **Projekte und Export:** Projektverwaltung, JSON, PDF, SVG und Historie
+6. **Betrieb:** Proxmox, Nginx, Dienste, Backups und Monitoring
+
+## Mitwirken und Dokumentation
+
+- [Beitragsrichtlinien](CONTRIBUTING.md)
+- [Architektur](docs/architecture.md)
+- [Plugin-Entwicklung](docs/plugin-development.md)
+- [Profilformat](docs/airfoil-format.md)
+- [Proxmox-Deployment](docs/deployment-proxmox.md)
+- [Sicherheitsgrundsätze](docs/security.md)
+- [Änderungshistorie](CHANGELOG.md)
+
+## Offene Entscheidungen
+
+- endgültige Open-Source-Lizenz
+- öffentliche oder administrativ freigegebene Registrierung
+- primärer Produktionsweg: native LXC-Installation oder Docker Compose
+- Umfang der E-Mail-Funktionen im MVP
+- lizenzrechtlich geprüfte Quellen der Startprofile
+- Standardabmessungen des ersten Sub-250-g-Modells
+- Umfang der Schwerpunkt- und Leitwerksberechnung
+
+Bis eine Lizenz gewählt wurde, werden keine Nutzungsrechte über die
+gesetzlichen Standardrechte hinaus eingeräumt; siehe [LICENSE](LICENSE).

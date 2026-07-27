@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180">
+  <title>Twin FPV Sub-250 Platzhalter</title>
+  <rect width="320" height="180" fill="#f2f4f7"/>
+  <path d="M30 90 L140 70 L180 70 L290 90 L180 100 L140 100 Z" fill="#90a4ae"/>
+  <rect x="150" y="35" width="20" height="110" rx="8" fill="#546e7a"/>
+</svg>

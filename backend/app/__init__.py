@@ -1,0 +1,1 @@
+"""FlächenSchmiede backend package."""
