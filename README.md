@@ -40,6 +40,16 @@ Flugtauglichkeit oder Betriebssicherheit dar.
 
 Die REST-API wird unter `/api/v1` versioniert. Längen werden intern in
 Millimetern, Massen in Gramm und Winkel in Grad gespeichert.
+Schema-Änderungen (z. B. neue Tabellen, Spalten, Indizes oder Constraints)
+werden von Beginn an ausschließlich über versionierte Alembic-Migrationen
+eingeführt.
+
+Frontend-Framework: React mit TypeScript und Vite.
+Backend-Framework: FastAPI mit Pydantic, SQLAlchemy 2 und Alembic.
+
+Das UI wird als modernes, token-basiertes Designsystem aufgebaut.
+Von Beginn an sind eine helle und eine dunkle Oberfläche vorgesehen.
+Die Auswahl wird später pro Benutzerprofil gespeichert.
 
 ## Repository-Struktur
 
@@ -66,6 +76,7 @@ Millimetern, Massen in Gramm und Winkel in Grad gespeichert.
 │   ├── scripts/
 │   └── systemd/
 ├── docs/                     # Architektur- und Betriebsdokumentation
+├── designtests/              # UI-Prototypen für Light/Dark und Komponenten
 ├── frontend/
 │   ├── public/
 │   └── src/
@@ -81,6 +92,13 @@ Die Verzeichnisse enthalten Platzhalter, bis die jeweilige Entwicklungsphase
 beginnt. Das Plugin-Grundgerüst enthält bereits ein Manifest, ein
 Parameterschema und zwei Preset-Dateien.
 
+## Design-Prototypen
+
+Im Verzeichnis `designtests/` liegen HTML/CSS/JS-Beispiele mit zentralen UI-
+Elementen (Navigation, Formulare, Tabellen, Karten, Statusanzeigen, Dialoge,
+Benachrichtigungen). Sie dienen als visuelle und technische Basis, um spätere
+Formatierungsregeln und CSS-Konventionen festzulegen.
+
 ## Lokale Entwicklung
 
 Die Entwicklungsumgebung wird in Phase 0 eingerichtet. Geplant sind:
@@ -90,6 +108,9 @@ Die Entwicklungsumgebung wird in Phase 0 eingerichtet. Geplant sind:
 3. Datenbankmigrationen ausführen und FastAPI starten.
 4. Frontend-Abhängigkeiten aus `frontend/package.json` installieren und Vite
    starten.
+
+Schemaänderungen ohne Migration gelten als unvollständig und werden nicht
+übernommen.
 
 Konfiguration erfolgt ausschließlich über Umgebungsvariablen. Als Vorlage
 dient `.env.example`; echte Geheimnisse dürfen nicht committed werden.
