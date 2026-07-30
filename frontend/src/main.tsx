@@ -72,7 +72,7 @@ function Login({ onLogin }: { onLogin: (auth: Auth) => void }) {
       <label>E-Mail-Adresse<input name="email" type="email" autoComplete="email" required /></label>
       <label>Passwort<input name="password" type="password" autoComplete="current-password" minLength={8} required /></label>
       <button className="primary" disabled={busy}>{busy ? "Anmeldung läuft …" : "Anmelden"}</button>
-      <small>Version 0.4.3</small>
+      <small>Version 0.4.4</small>
     </form></section>
   </main>;
 }
@@ -80,7 +80,7 @@ function Login({ onLogin }: { onLogin: (auth: Auth) => void }) {
 function Shell({ user, onUser, onLogout }: { user: User; onUser: (u: User) => void; onLogout: () => void }) {
   const [view, setView] = useState<"designer" | "airfoils" | "profile" | "users">("designer");
   return <div className="shell"><aside>
-    <div className="brand"><span className="brand-mark">FS</span><span><strong>FlächenSchmiede</strong><small>Version 0.4.3</small></span></div>
+    <div className="brand"><span className="brand-mark">FS</span><span><strong>FlächenSchmiede</strong><small>Version 0.4.4</small></span></div>
     <nav><button className={view === "designer" ? "active" : ""} onClick={() => setView("designer")}>Modell-Konfigurator</button>
       <button className={view === "airfoils" ? "active" : ""} onClick={() => setView("airfoils")}>Tragflächenprofile</button>
       <button className={view === "profile" ? "active" : ""} onClick={() => setView("profile")}>Mein Profil</button>

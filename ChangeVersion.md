@@ -1,5 +1,14 @@
 # Versionshistorie
 
+## 0.4.4 – 2026-07-31
+
+- 3D-Flügelgeometrie wird direkt aus derselben serverseitigen Kontur wie die
+  2D-Draufsicht erzeugt.
+- Achsenausrichtung von Profiltiefe und Spannweite zwischen 2D und 3D
+  vereinheitlicht.
+- Draufsicht-Kamera und Motorpositionen an das gemeinsame Koordinatensystem
+  angepasst.
+
 ## 0.4.3 – 2026-07-31
 
 - Wurzel- und Randprofil können im Modell-Konfigurator aus der aktiven
