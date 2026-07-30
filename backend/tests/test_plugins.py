@@ -8,7 +8,7 @@ PLUGIN_ROOT = Path(__file__).resolve().parents[2] / "plugins"
 
 def test_load_plugin_manifest_and_presets():
     plugin = PluginRegistry(PLUGIN_ROOT).load("twin-fpv-sub250")
-    assert plugin.manifest["version"] == "0.1.1"
+    assert plugin.manifest["version"] == "0.1.2"
     assert {preset["name"] for preset in plugin.presets} == {"Trainer", "FPV Cruiser"}
 
 
@@ -31,6 +31,19 @@ def test_rejects_motor_positions_outside_wing():
     result = registry.evaluate("twin-fpv-sub250", parameters)
     assert result["geometry"] == {}
     assert any(message["code"] == "motor-spacing" for message in result["messages"])
+
+
+def test_rejects_different_airfoil_kinds():
+    registry = PluginRegistry(PLUGIN_ROOT)
+    plugin = registry.load("twin-fpv-sub250")
+    parameters = next(preset for preset in plugin.presets if preset["name"] == "Trainer")["parameters"]
+    parameters["airfoils"] = {
+        "root": {"id": "root", "name": "Wurzel", "kind": "conventional"},
+        "tip": {"id": "tip", "name": "Rand", "kind": "kfm2"},
+    }
+    result = registry.evaluate("twin-fpv-sub250", parameters)
+    assert result["geometry"] == {}
+    assert any(message["code"] == "airfoil-kind-mismatch" for message in result["messages"])
 
 
 def test_plugin_api(admin):

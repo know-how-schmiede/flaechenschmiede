@@ -2,11 +2,11 @@
   "schemaVersion": "1.0",
   "id": "twin-fpv-sub250",
   "name": "Twin FPV Sub-250",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Konventioneller zweimotoriger FPV-Flieger mit Sub-250-g-Ziel.",
   "author": "FlächenSchmiede contributors",
   "license": "UNLICENSED",
-  "requiresCore": ">=0.4.1",
+  "requiresCore": ">=0.4.3",
   "entryPoints": {
     "geometry": "geometry.py",
     "calculations": "calculations.py",

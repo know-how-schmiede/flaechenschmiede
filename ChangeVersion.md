@@ -1,5 +1,15 @@
 # Versionshistorie
 
+## 0.4.3 – 2026-07-31
+
+- Wurzel- und Randprofil können im Modell-Konfigurator aus der aktiven
+  Profilbibliothek ausgewählt werden.
+- Randprofile werden auf den Profiltyp des gewählten Wurzelprofils gefiltert.
+- Nicht mehr passende Randprofil-Auswahlen werden beim Wechsel des Wurzeltyps
+  automatisch zurückgesetzt.
+- Das Geometrie-Plugin validiert zusätzlich, dass beide Profile demselben Typ
+  entsprechen.
+
 ## 0.4.2 – 2026-07-30
 
 - Berechnete Geometrie- und Gewichtswerte mit erklärenden, zugänglichen

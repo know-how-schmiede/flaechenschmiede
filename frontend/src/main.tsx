@@ -72,7 +72,7 @@ function Login({ onLogin }: { onLogin: (auth: Auth) => void }) {
       <label>E-Mail-Adresse<input name="email" type="email" autoComplete="email" required /></label>
       <label>Passwort<input name="password" type="password" autoComplete="current-password" minLength={8} required /></label>
       <button className="primary" disabled={busy}>{busy ? "Anmeldung läuft …" : "Anmelden"}</button>
-      <small>Version 0.4.2</small>
+      <small>Version 0.4.3</small>
     </form></section>
   </main>;
 }
@@ -80,7 +80,7 @@ function Login({ onLogin }: { onLogin: (auth: Auth) => void }) {
 function Shell({ user, onUser, onLogout }: { user: User; onUser: (u: User) => void; onLogout: () => void }) {
   const [view, setView] = useState<"designer" | "airfoils" | "profile" | "users">("designer");
   return <div className="shell"><aside>
-    <div className="brand"><span className="brand-mark">FS</span><span><strong>FlächenSchmiede</strong><small>Version 0.4.2</small></span></div>
+    <div className="brand"><span className="brand-mark">FS</span><span><strong>FlächenSchmiede</strong><small>Version 0.4.3</small></span></div>
     <nav><button className={view === "designer" ? "active" : ""} onClick={() => setView("designer")}>Modell-Konfigurator</button>
       <button className={view === "airfoils" ? "active" : ""} onClick={() => setView("airfoils")}>Tragflächenprofile</button>
       <button className={view === "profile" ? "active" : ""} onClick={() => setView("profile")}>Mein Profil</button>
@@ -181,6 +181,7 @@ function PlanformPreview({ evaluation }: { evaluation: PluginEvaluation | null }
 
 function ModelDesigner() {
   const [plugins, setPlugins] = useState<GeometryPlugin[]>([]);
+  const [airfoils, setAirfoils] = useState<Airfoil[]>([]);
   const [plugin, setPlugin] = useState<GeometryPlugin | null>(null);
   const [parameters, setParameters] = useState<ModelParameters | null>(null);
   const [evaluation, setEvaluation] = useState<PluginEvaluation | null>(null);
@@ -193,6 +194,7 @@ function ModelDesigner() {
       setPlugins(list); setPlugin(list[0] || null);
       setParameters(list[0]?.presets[0]?.parameters || null);
     }).catch(e => setError(e.message));
+    api<Airfoil[]>("/airfoils").then(setAirfoils).catch(e => setError(e.message));
   }, []);
   const setWing = (key: keyof ModelParameters["wing"], value: number) => {
     setParameters(current => current ? { ...current, wing: { ...current.wing, [key]: value } } : current);
@@ -203,6 +205,19 @@ function ModelDesigner() {
   const setPropulsion = (key: keyof ModelParameters["propulsion"], value: number) => {
     setParameters(current => current ? { ...current, propulsion: { ...current.propulsion, [key]: value } } : current);
   };
+  function setAirfoil(position: "root" | "tip", id: string) {
+    setParameters(current => {
+      if (!current) return current;
+      const selected = airfoils.find(item => item.id === id);
+      const selection = selected ? { id: selected.id, name: selected.name, kind: selected.kind } : null;
+      if (position === "root") {
+        const compatibleTip = selection && current.airfoils.tip?.kind === selection.kind ? current.airfoils.tip : null;
+        return { ...current, airfoils: { root: selection, tip: compatibleTip } };
+      }
+      return { ...current, airfoils: { ...current.airfoils, tip: selection } };
+    });
+    setEvaluation(null);
+  }
   async function calculate(event?: FormEvent) {
     event?.preventDefault();
     if (!plugin || !parameters) return;
@@ -234,6 +249,17 @@ function ModelDesigner() {
         <label>Randtiefe (mm)<input type="number" value={parameters.wing.tipChordMm} min="20" onChange={e => setWing("tipChordMm", Number(e.target.value))} /></label>
         <label>Pfeilung (°)<input type="number" value={parameters.wing.sweepDeg} step=".5" onChange={e => setWing("sweepDeg", Number(e.target.value))} /></label>
         <label>V-Form (°)<input type="number" value={parameters.wing.dihedralDeg} step=".5" onChange={e => setWing("dihedralDeg", Number(e.target.value))} /></label>
+      </div><h2>Tragflächenprofile</h2><div className="field-pair">
+        <label>Wurzelprofil<select value={parameters.airfoils.root?.id || ""} onChange={e => setAirfoil("root", e.target.value)}>
+          <option value="">Nicht ausgewählt</option>
+          {airfoils.map(item => <option key={item.id} value={item.id}>{item.name} · {kindLabels[item.kind]}</option>)}
+        </select></label>
+        <label>Randprofil<select value={parameters.airfoils.tip?.id || ""} disabled={!parameters.airfoils.root}
+          onChange={e => setAirfoil("tip", e.target.value)}>
+          <option value="">{parameters.airfoils.root ? "Nicht ausgewählt" : "Zuerst Wurzelprofil wählen"}</option>
+          {airfoils.filter(item => item.kind === parameters.airfoils.root?.kind).map(item =>
+            <option key={item.id} value={item.id}>{item.name} · {kindLabels[item.kind]}</option>)}
+        </select></label>
       </div><h2>Gewicht</h2><div className="field-pair">
         <label>Zielgewicht (g)<input type="number" value={parameters.weight.targetG} min="1" onChange={e => setWeight("targetG", Number(e.target.value))} /></label>
         <label>Reserve (g)<input type="number" value={parameters.weight.reserveG} min="0" onChange={e => setWeight("reserveG", Number(e.target.value))} /></label>

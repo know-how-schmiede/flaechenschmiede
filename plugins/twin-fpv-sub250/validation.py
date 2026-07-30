@@ -11,6 +11,7 @@ def validate(parameters: dict) -> list[dict]:
         wing = parameters["wing"]
         weight = parameters["weight"]
         propulsion = parameters["propulsion"]
+        airfoils = parameters["airfoils"]
         span = float(wing["spanMm"])
         root = float(wing["rootChordMm"])
         tip = float(wing["tipChordMm"])
@@ -20,6 +21,8 @@ def validate(parameters: dict) -> list[dict]:
         reserve = float(weight["reserveG"])
         motor_spacing = float(propulsion["motorSpacingMm"])
         leading_edge_offset = float(propulsion["leadingEdgeOffsetMm"])
+        root_airfoil = airfoils.get("root")
+        tip_airfoil = airfoils.get("tip")
     except (KeyError, TypeError, ValueError):
         return [_message("error", "invalid-parameters",
                          "Pflichtparameter fehlen oder sind ungültig.", "$")]
@@ -68,6 +71,11 @@ def validate(parameters: dict) -> list[dict]:
         messages.append(_message("error", "weight-reserve",
                                  "Gewichtsreserve muss kleiner als das Zielgewicht sein.",
                                  "weight.reserveG"))
+    if root_airfoil and tip_airfoil and root_airfoil.get("kind") != tip_airfoil.get("kind"):
+        messages.append(_message(
+            "error", "airfoil-kind-mismatch",
+            "Wurzel- und Randprofil müssen vom gleichen Profiltyp sein.",
+            "airfoils.tip"))
     if target > 250:
         messages.append(_message("warning", "sub250-target",
                                  "Zielgewicht überschreitet die Sub-250-g-Grenze.",

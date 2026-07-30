@@ -16,6 +16,10 @@
     "propulsion": {
       "motorSpacingMm": 420,
       "leadingEdgeOffsetMm": 60
+    },
+    "airfoils": {
+      "root": null,
+      "tip": null
     }
   }
 }

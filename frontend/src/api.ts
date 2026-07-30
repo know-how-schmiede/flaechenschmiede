@@ -19,6 +19,10 @@ export type ModelParameters = {
   wing: { spanMm: number; rootChordMm: number; tipChordMm: number; sweepDeg: number; dihedralDeg: number };
   weight: { targetG: number; reserveG: number };
   propulsion: { motorSpacingMm: number; leadingEdgeOffsetMm: number };
+  airfoils: {
+    root: { id: string; name: string; kind: AirfoilKind } | null;
+    tip: { id: string; name: string; kind: AirfoilKind } | null;
+  };
 };
 export type PluginEvaluation = {
   parameters: ModelParameters;
