@@ -130,7 +130,8 @@ if $environment_created; then
     runuser --user postgres -- psql -c "CREATE ROLE flaechenschmiede LOGIN PASSWORD '${db_password}'"
   runuser --user postgres -- psql -c "ALTER ROLE flaechenschmiede PASSWORD '${db_password}'"
   runuser --user postgres -- psql -tAc "SELECT 1 FROM pg_database WHERE datname='flaechenschmiede'" | grep -q 1 ||
-    runuser --user postgres -- createdb --owner=flaechenschmiede flaechenschmiede
+    runuser --user postgres -- createdb --owner=flaechenschmiede \
+      --encoding=UTF8 --template=template0 flaechenschmiede
   sed -i \
     -e "s|^APP_SECRET_KEY=.*|APP_SECRET_KEY=${secret_key}|" \
     -e "s|^DATABASE_URL=.*|DATABASE_URL=postgresql+psycopg://flaechenschmiede:${db_password}@localhost:5432/flaechenschmiede|" \
@@ -140,6 +141,13 @@ if $environment_created; then
 else
   log "Vorhandene Konfiguration und Datenbank-Zugangsdaten werden beibehalten."
 fi
+
+database_encoding="$(
+  runuser --user postgres -- psql -tAc \
+    "SELECT pg_encoding_to_char(encoding) FROM pg_database WHERE datname='flaechenschmiede'"
+)"
+[[ "$database_encoding" == "UTF8" ]] ||
+  fail "Datenbank-Encoding ist '${database_encoding:-unbekannt}', benötigt wird UTF8. Siehe setup/setup.md."
 
 log "Installiere Backend und führe Migrationen aus."
 run_as_app_user python3 -m venv "${FS_INSTALL_DIR}/.venv"

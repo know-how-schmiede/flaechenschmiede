@@ -1,5 +1,11 @@
 # Versionshistorie
 
+## 0.1.2 – 2026-07-30
+
+- Neue PostgreSQL-Datenbanken werden im LXC explizit mit UTF-8 angelegt.
+- Installation prüft das Datenbank-Encoding vor Backend-Migrationen und meldet
+  inkompatible Bestandsdatenbanken verständlich.
+
 ## 0.1.1 – 2026-07-30
 
 - LXC-Migration von einem unzulässigen relativen `.env`-Zugriff entkoppelt.

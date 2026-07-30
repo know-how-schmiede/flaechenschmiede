@@ -2,7 +2,7 @@
 
 Diese Anleitung richtet sich an Einsteiger. Die Skripte sind für einen
 **unprivilegierten Debian-LXC unter Proxmox** vorbereitet. FlächenSchmiede
-liegt aktuell in Version 0.1.1 vor. Anmeldung, Profil, Benutzerverwaltung,
+liegt aktuell in Version 0.1.2 vor. Anmeldung, Profil, Benutzerverwaltung,
 Backend, Datenbankmigrationen und Dienste werden durch das Setup eingerichtet.
 
 ## Was die Skripte machen
@@ -273,6 +273,30 @@ PostgreSQL prüfen:
 ```bash
 systemctl status postgresql --no-pager
 ```
+
+Datenbank-Encoding prüfen:
+
+```bash
+runuser --user postgres -- psql -tAc \
+  "SELECT pg_encoding_to_char(encoding) FROM pg_database WHERE datname='flaechenschmiede'"
+```
+
+Erwartet wird `UTF8`. Wurde eine erste Installation bereits vor der ersten
+erfolgreichen Migration mit `SQL_ASCII` abgebrochen, enthält die Datenbank noch
+keine Anwendungsdaten und kann für den erneuten Test neu angelegt werden:
+
+```bash
+runuser --user postgres -- dropdb --if-exists flaechenschmiede
+runuser --user postgres -- createdb \
+  --owner=flaechenschmiede \
+  --encoding=UTF8 \
+  --template=template0 \
+  flaechenschmiede
+```
+
+Diese beiden Befehle löschen die Datenbank vollständig. Sie dürfen nicht bei
+einer bereits verwendeten Installation mit erhaltenswerten Daten ausgeführt
+werden.
 
 Bei einer Fehlermeldung sind diese Informationen hilfreich:
 
