@@ -4,6 +4,12 @@ export type User = {
   id: string; email: string; display_name: string; role: Role;
   is_active: boolean; theme: Theme; created_at: string;
 };
+export type AirfoilKind = "conventional" | "kfm1" | "kfm2" | "kfm4";
+export type Airfoil = {
+  id: string; name: string; kind: AirfoilKind; description: string | null;
+  coordinates: number[][]; parameters: Record<string, number | string>;
+  is_active: boolean; created_at: string;
+};
 
 let csrfToken = "";
 export const setCsrf = (token: string) => { csrfToken = token; };

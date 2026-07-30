@@ -17,7 +17,7 @@ def database():
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
     with SessionLocal() as db:
-        db.add(User(email="admin@example.test", display_name="Admin",
+        db.add(User(email="admin@example.com", display_name="Admin",
                     password_hash=hash_password("A-secure-test-password"), role=UserRole.ADMIN))
         db.commit()
     yield
@@ -32,7 +32,7 @@ def client():
 @pytest.fixture
 def admin(client):
     response = client.post("/api/v1/auth/login", json={
-        "email": "admin@example.test", "password": "A-secure-test-password"
+        "email": "admin@example.com", "password": "A-secure-test-password"
     })
     assert response.status_code == 200
     return {"client": client, "csrf": response.json()["csrf_token"]}

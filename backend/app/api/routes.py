@@ -5,13 +5,16 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session as DbSession
 
+from app.airfoils.service import AirfoilDataError, generate_kfm, parse_dat
 from app.auth.security import (
     create_session, get_current_session, hash_password, require_admin,
     require_csrf, verify_password,
 )
 from app.core.config import get_settings
 from app.core.database import get_db
+from app.models.airfoil import Airfoil, AirfoilKind
 from app.models.user import AuditEvent, Session, User
+from app.schemas.airfoil import AirfoilCreate, AirfoilOut, AirfoilStatusUpdate
 from app.schemas.user import (
     LoginIn, PasswordUpdate, ProfileUpdate, UserAdminUpdate, UserCreate, UserOut,
 )
@@ -111,3 +114,79 @@ def update_user(user_id: UUID, payload: UserAdminUpdate, admin: Session = Depend
     audit(db, admin.user, "user.updated", user.id, payload.model_dump(mode="json"))
     db.commit()
     return user
+
+
+@router.get("/airfoils", response_model=list[AirfoilOut])
+def list_airfoils(
+    include_inactive: bool = False,
+    session: Session = Depends(get_current_session),
+    db: DbSession = Depends(get_db),
+):
+    query = select(Airfoil).order_by(Airfoil.name)
+    if not include_inactive or session.user.role.value != "admin":
+        query = query.where(Airfoil.is_active.is_(True))
+    return list(db.scalars(query))
+
+
+@router.get("/airfoils/{airfoil_id}", response_model=AirfoilOut)
+def get_airfoil(
+    airfoil_id: UUID,
+    session: Session = Depends(get_current_session),
+    db: DbSession = Depends(get_db),
+):
+    airfoil = db.get(Airfoil, airfoil_id)
+    if not airfoil or (not airfoil.is_active and session.user.role.value != "admin"):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Profil nicht gefunden")
+    return airfoil
+
+
+@router.post("/admin/airfoils", response_model=AirfoilOut, status_code=201)
+def create_airfoil(
+    payload: AirfoilCreate,
+    admin: Session = Depends(require_admin),
+    db: DbSession = Depends(get_db),
+):
+    if db.scalar(select(Airfoil).where(func.lower(Airfoil.name) == payload.name.lower())):
+        raise HTTPException(status.HTTP_409_CONFLICT, "Profilname wird bereits verwendet")
+    try:
+        if payload.kind == AirfoilKind.CONVENTIONAL:
+            coordinates = parse_dat(payload.dat_content or "")
+            parameters: dict = {"source": "dat-import"}
+        else:
+            coordinates = generate_kfm(payload.kind, payload.step_position, payload.thickness)
+            parameters = {
+                "step_position": payload.step_position,
+                "thickness": payload.thickness,
+            }
+    except AirfoilDataError as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
+    airfoil = Airfoil(
+        name=payload.name.strip(),
+        kind=payload.kind,
+        description=payload.description.strip() if payload.description else None,
+        coordinates=coordinates,
+        parameters=parameters,
+        created_by_id=admin.user.id,
+    )
+    db.add(airfoil)
+    db.flush()
+    audit(db, admin.user, "airfoil.created", airfoil.id, {"kind": airfoil.kind.value})
+    db.commit()
+    db.refresh(airfoil)
+    return airfoil
+
+
+@router.patch("/admin/airfoils/{airfoil_id}", response_model=AirfoilOut)
+def update_airfoil_status(
+    airfoil_id: UUID,
+    payload: AirfoilStatusUpdate,
+    admin: Session = Depends(require_admin),
+    db: DbSession = Depends(get_db),
+):
+    airfoil = db.get(Airfoil, airfoil_id)
+    if not airfoil:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Profil nicht gefunden")
+    airfoil.is_active = payload.is_active
+    audit(db, admin.user, "airfoil.status_updated", airfoil.id, payload.model_dump())
+    db.commit()
+    return airfoil

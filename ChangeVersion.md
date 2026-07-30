@@ -1,5 +1,15 @@
 # Versionshistorie
 
+## 0.2.0 – 2026-07-30
+
+- Versionierte Profilbibliothek mit klassischem DAT-Import ergänzt.
+- Parametrische KFm1-, KFm2- und KFm4-Profile werden serverseitig erzeugt.
+- Neue Alembic-Migration für Profile, Koordinaten, Parameter und Status.
+- Rollenbasierte Profil-API mit Audit-Ereignissen umgesetzt.
+- Profilverwaltung mit responsiver SVG-Konturvorschau im Frontend ergänzt.
+- Betroffene React-Router-Abhängigkeit durch eine kleine interne Navigation
+  ersetzt; npm-Audit meldet keine bekannten Schwachstellen mehr.
+
 ## 0.1.7 – 2026-07-30
 
 - Laufzeit-, Abhängigkeits- und Build-Artefakte werden von Git ignoriert, damit

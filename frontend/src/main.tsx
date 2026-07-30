@@ -1,7 +1,6 @@
 import React, { FormEvent, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Navigate, NavLink, Route, Routes, useNavigate } from "react-router-dom";
-import { api, Role, setCsrf, Theme, User } from "./api";
+import { Airfoil, AirfoilKind, api, Role, setCsrf, Theme, User } from "./api";
 import "./styles.css";
 
 type Auth = { user: User; csrf_token: string };
@@ -34,23 +33,26 @@ function Login({ onLogin }: { onLogin: (auth: Auth) => void }) {
       <label>E-Mail-Adresse<input name="email" type="email" autoComplete="email" required /></label>
       <label>Passwort<input name="password" type="password" autoComplete="current-password" minLength={8} required /></label>
       <button className="primary" disabled={busy}>{busy ? "Anmeldung läuft …" : "Anmelden"}</button>
-      <small>Version 0.1.7</small>
+      <small>Version 0.2.0</small>
     </form></section>
   </main>;
 }
 
 function Shell({ user, onUser, onLogout }: { user: User; onUser: (u: User) => void; onLogout: () => void }) {
+  const [view, setView] = useState<"airfoils" | "profile" | "users">("airfoils");
   return <div className="shell"><aside>
-    <div className="brand"><span className="brand-mark">FS</span><span><strong>FlächenSchmiede</strong><small>Version 0.1.7</small></span></div>
-    <nav><NavLink to="/profile">Profil</NavLink>{user.role === "admin" && <NavLink to="/admin/users">Benutzerverwaltung</NavLink>}</nav>
+    <div className="brand"><span className="brand-mark">FS</span><span><strong>FlächenSchmiede</strong><small>Version 0.2.0</small></span></div>
+    <nav><button className={view === "airfoils" ? "active" : ""} onClick={() => setView("airfoils")}>Tragflächenprofile</button>
+      <button className={view === "profile" ? "active" : ""} onClick={() => setView("profile")}>Mein Profil</button>
+      {user.role === "admin" && <button className={view === "users" ? "active" : ""} onClick={() => setView("users")}>Benutzerverwaltung</button>}</nav>
     <div className="account"><span className="avatar">{user.display_name.slice(0, 2).toUpperCase()}</span>
       <span><strong>{user.display_name}</strong><small>{user.role === "admin" ? "Administrator" : "Benutzer"}</small></span></div>
     <button className="ghost" onClick={onLogout}>Abmelden</button>
-  </aside><div className="content"><Routes>
-    <Route path="/profile" element={<Profile user={user} onUser={onUser} />} />
-    <Route path="/admin/users" element={user.role === "admin" ? <Users /> : <Navigate to="/profile" />} />
-    <Route path="*" element={<Navigate to="/profile" />} />
-  </Routes></div></div>;
+  </aside><div className="content">
+    {view === "airfoils" && <Airfoils user={user} />}
+    {view === "profile" && <Profile user={user} onUser={onUser} />}
+    {view === "users" && user.role === "admin" && <Users />}
+  </div></div>;
 }
 
 function Profile({ user, onUser }: { user: User; onUser: (u: User) => void }) {
@@ -111,17 +113,102 @@ function Users() {
         <td>{new Date(u.created_at).toLocaleDateString("de-DE")}</td></tr>)}</tbody></table></section></>;
 }
 
+const kindLabels: Record<AirfoilKind, string> = {
+  conventional: "Klassisch", kfm1: "KFm1", kfm2: "KFm2", kfm4: "KFm4",
+};
+
+function AirfoilPreview({ airfoil }: { airfoil: Airfoil }) {
+  const points = airfoil.coordinates;
+  if (!points.length) return null;
+  const minY = Math.min(...points.map(point => point[1]));
+  const maxY = Math.max(...points.map(point => point[1]));
+  const rangeY = Math.max(maxY - minY, .12);
+  const path = points.map((point, index) => {
+    const x = 25 + point[0] * 550;
+    const y = 110 - ((point[1] - (minY + maxY) / 2) / rangeY) * 150;
+    return `${index ? "L" : "M"} ${x.toFixed(1)} ${y.toFixed(1)}`;
+  }).join(" ");
+  return <svg className="airfoil-preview" viewBox="0 0 600 220" role="img" aria-label={`Kontur ${airfoil.name}`}>
+    <line x1="25" y1="110" x2="575" y2="110" className="axis" />
+    <path d={path} />
+  </svg>;
+}
+
+function Airfoils({ user }: { user: User }) {
+  const [airfoils, setAirfoils] = useState<Airfoil[]>([]);
+  const [selected, setSelected] = useState<Airfoil | null>(null);
+  const [kind, setKind] = useState<AirfoilKind>("conventional");
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const load = async () => {
+    try {
+      const list = await api<Airfoil[]>(`/airfoils?include_inactive=${user.role === "admin"}`);
+      setAirfoils(list);
+      setSelected(current => list.find(item => item.id === current?.id) || list[0] || null);
+    } catch (e) { setError((e as Error).message); }
+  };
+  useEffect(() => { void load(); }, []);
+  async function create(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    try {
+      await api("/admin/airfoils", { method: "POST", body: JSON.stringify({
+        name: data.get("name"), kind, description: data.get("description") || null,
+        dat_content: kind === "conventional" ? data.get("dat_content") : null,
+        step_position: Number(data.get("step_position") || .5),
+        thickness: Number(data.get("thickness") || .08),
+      }) });
+      form.reset(); setKind("conventional"); setMessage("Profil wurde angelegt."); setError("");
+      await load();
+    } catch (e) { setError((e as Error).message); setMessage(""); }
+  }
+  async function toggle(airfoil: Airfoil) {
+    try {
+      await api(`/admin/airfoils/${airfoil.id}`, { method: "PATCH",
+        body: JSON.stringify({ is_active: !airfoil.is_active }) });
+      await load();
+    } catch (e) { setError((e as Error).message); }
+  }
+  return <><header><p className="eyebrow">Profilbibliothek</p><h1>Tragflächenprofile</h1>
+    <p className="muted">Normierte Profilkonturen für Konstruktion und Vorschau.</p></header>
+    {(error || message) && <div className={`alert ${error ? "error" : "success"}`}>{error || message}</div>}
+    {user.role === "admin" && <form className="card airfoil-form" onSubmit={create}><h2>Profil hinzufügen</h2>
+      <label>Name<input name="name" required minLength={2} placeholder="z. B. NACA 2412" /></label>
+      <label>Typ<select value={kind} onChange={e => setKind(e.target.value as AirfoilKind)}>
+        {Object.entries(kindLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+      </select></label>
+      <label className="full">Beschreibung<input name="description" placeholder="Optionale Herkunft oder Hinweise" /></label>
+      {kind === "conventional" ? <label className="full">DAT-Koordinaten
+        <textarea name="dat_content" required rows={8} placeholder={"Profilname\n1.0000 0.0000\n0.5000 0.0800\n0.0000 0.0000\n0.5000 -0.0400\n1.0000 0.0000"} />
+      </label> : <><label>Stufenposition (Anteil Profiltiefe)<input name="step_position" type="number" min=".1" max=".9" step=".01" defaultValue=".5" required /></label>
+        <label>Dicke (Anteil Profiltiefe)<input name="thickness" type="number" min=".01" max=".3" step=".01" defaultValue=".08" required /></label></>}
+      <button className="primary">Profil anlegen</button></form>}
+    <div className="airfoil-layout"><section className="card airfoil-list"><h2>Bibliothek <span>{airfoils.length}</span></h2>
+      {airfoils.length === 0 && <p className="muted">Noch keine Profile vorhanden.</p>}
+      {airfoils.map(item => <button type="button" key={item.id} className={`airfoil-item ${selected?.id === item.id ? "selected" : ""}`} onClick={() => setSelected(item)}>
+        <span><strong>{item.name}</strong><small>{kindLabels[item.kind]}</small></span>
+        <span className={`status ${item.is_active ? "active" : ""}`}>{item.is_active ? "Aktiv" : "Inaktiv"}</span>
+      </button>)}</section>
+      <section className="card airfoil-detail">{selected ? <><div className="section-title"><div><p className="eyebrow">{kindLabels[selected.kind]}</p><h2>{selected.name}</h2></div>
+        {user.role === "admin" && <button className="secondary compact" onClick={() => toggle(selected)}>{selected.is_active ? "Deaktivieren" : "Aktivieren"}</button>}</div>
+        <AirfoilPreview airfoil={selected} /><p className="muted">{selected.description || "Keine Beschreibung hinterlegt."}</p>
+        <dl><div><dt>Koordinaten</dt><dd>{selected.coordinates.length}</dd></div>
+          {Object.entries(selected.parameters).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{String(value)}</dd></div>)}</dl>
+      </> : <p className="muted">Profil auswählen, um die Kontur anzuzeigen.</p>}</section></div></>;
+}
+
 function applyTheme(theme: Theme) {
   document.documentElement.dataset.theme = theme === "system"
     ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : theme;
 }
 function App() {
-  const [auth, setAuth] = useState<Auth | null | undefined>(undefined); const navigate = useNavigate();
+  const [auth, setAuth] = useState<Auth | null | undefined>(undefined);
   useEffect(() => { api<Auth>("/auth/me").then(a => { setCsrf(a.csrf_token); applyTheme(a.user.theme); setAuth(a); }).catch(() => setAuth(null)); }, []);
   if (auth === undefined) return <div className="loading">FlächenSchmiede wird geladen …</div>;
-  if (!auth) return <Login onLogin={a => { applyTheme(a.user.theme); setAuth(a); navigate("/profile"); }} />;
+  if (!auth) return <Login onLogin={a => { applyTheme(a.user.theme); setAuth(a); }} />;
   return <Shell user={auth.user} onUser={user => setAuth({ ...auth, user })} onLogout={async () => {
-    await api("/auth/logout", { method: "POST" }); setAuth(null); navigate("/");
+    await api("/auth/logout", { method: "POST" }); setAuth(null);
   }} />;
 }
-createRoot(document.getElementById("root")!).render(<React.StrictMode><BrowserRouter><App /></BrowserRouter></React.StrictMode>);
+createRoot(document.getElementById("root")!).render(<React.StrictMode><App /></React.StrictMode>);
