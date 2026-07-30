@@ -1,5 +1,10 @@
 # Versionshistorie
 
+## 0.1.7 – 2026-07-30
+
+- Laufzeit-, Abhängigkeits- und Build-Artefakte werden von Git ignoriert, damit
+  eine reguläre LXC-Installation den geschützten Update-Ablauf nicht blockiert.
+
 ## 0.1.6 – 2026-07-30
 
 - Gebautes Frontend wird getrennt vom geschützten Anwendungscode unter
