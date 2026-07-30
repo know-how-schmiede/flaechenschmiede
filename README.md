@@ -101,7 +101,7 @@ Formatierungsregeln und CSS-Konventionen festzulegen.
 
 ## Lokale Entwicklung
 
-Der schnellste Testweg für Version 0.4.1 ist Docker:
+Der schnellste Testweg für Version 0.4.2 ist Docker:
 
 ```bash
 docker compose up --build -d

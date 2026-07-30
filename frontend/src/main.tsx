@@ -5,6 +5,44 @@ import "./styles.css";
 
 type Auth = { user: User; csrf_token: string };
 const ModelPreview3D = React.lazy(() => import("./ModelPreview3D").then(module => ({ default: module.ModelPreview3D })));
+const calculationHelp: Record<string, { unit: string; description: string }> = {
+  wingAreaMm2: {
+    unit: "mm²",
+    description: "Gesamte projizierte Tragflächenfläche in Quadratmillimetern.",
+  },
+  wingAreaDm2: {
+    unit: "dm²",
+    description: "Tragflächenfläche in Quadratdezimetern; diese Einheit wird für die Flächenbelastung verwendet.",
+  },
+  aspectRatio: {
+    unit: "",
+    description: "Streckung der Tragfläche: Spannweite zum Quadrat, geteilt durch die Flügelfläche.",
+  },
+  taperRatio: {
+    unit: "",
+    description: "Zuspitzungsverhältnis: Randbogentiefe geteilt durch Wurzeltiefe. 1,0 entspricht einem Rechteckflügel.",
+  },
+  meanAerodynamicChordMm: {
+    unit: "mm",
+    description: "Mittlere aerodynamische Flügeltiefe (MAC) als repräsentative Tiefe der zugespitzten Tragfläche.",
+  },
+  quarterChordMm: {
+    unit: "mm",
+    description: "Ein Viertel der mittleren aerodynamischen Flügeltiefe; eine wichtige Bezugslänge für aerodynamische Betrachtungen.",
+  },
+  tipOffsetMm: {
+    unit: "mm",
+    description: "Versatz der Randbogen-Vorderkante gegenüber der Flügelwurzel, der sich aus Spannweite und Pfeilungswinkel ergibt.",
+  },
+  targetWingLoadingGdm2: {
+    unit: "g/dm²",
+    description: "Flächenbelastung beim Zielgewicht: Zielgewicht geteilt durch die Tragflächenfläche. Kleinere Werte deuten meist auf geringere Fluggeschwindigkeiten hin.",
+  },
+  availableStructureG: {
+    unit: "g",
+    description: "Verfügbares Gewicht nach Abzug der eingetragenen Gewichtsreserve vom Zielgewicht.",
+  },
+};
 
 function Login({ onLogin }: { onLogin: (auth: Auth) => void }) {
   const [error, setError] = useState("");
@@ -34,7 +72,7 @@ function Login({ onLogin }: { onLogin: (auth: Auth) => void }) {
       <label>E-Mail-Adresse<input name="email" type="email" autoComplete="email" required /></label>
       <label>Passwort<input name="password" type="password" autoComplete="current-password" minLength={8} required /></label>
       <button className="primary" disabled={busy}>{busy ? "Anmeldung läuft …" : "Anmelden"}</button>
-      <small>Version 0.4.1</small>
+      <small>Version 0.4.2</small>
     </form></section>
   </main>;
 }
@@ -42,7 +80,7 @@ function Login({ onLogin }: { onLogin: (auth: Auth) => void }) {
 function Shell({ user, onUser, onLogout }: { user: User; onUser: (u: User) => void; onLogout: () => void }) {
   const [view, setView] = useState<"designer" | "airfoils" | "profile" | "users">("designer");
   return <div className="shell"><aside>
-    <div className="brand"><span className="brand-mark">FS</span><span><strong>FlächenSchmiede</strong><small>Version 0.4.1</small></span></div>
+    <div className="brand"><span className="brand-mark">FS</span><span><strong>FlächenSchmiede</strong><small>Version 0.4.2</small></span></div>
     <nav><button className={view === "designer" ? "active" : ""} onClick={() => setView("designer")}>Modell-Konfigurator</button>
       <button className={view === "airfoils" ? "active" : ""} onClick={() => setView("airfoils")}>Tragflächenprofile</button>
       <button className={view === "profile" ? "active" : ""} onClick={() => setView("profile")}>Mein Profil</button>
@@ -223,7 +261,17 @@ function ModelDesigner() {
         : <PlanformPreview evaluation={evaluation} />}
       <div className="validation-list">{evaluation?.messages.map(message => <div key={message.code} className={`validation ${message.severity}`}>{message.message}</div>)}</div>
       {evaluation && Object.keys(evaluation.calculations).length > 0 && <div className="calculation-grid">
-        {Object.entries(evaluation.calculations).map(([key, value]) => <div key={key}><span>{key}</span><strong>{value}</strong></div>)}
+        {Object.entries(evaluation.calculations).map(([key, value]) => {
+          const help = calculationHelp[key];
+          const tooltipId = `calculation-help-${key}`;
+          return <div key={key}>
+            <span className="calculation-label">{key}{help && <span className="tooltip">
+              <button type="button" className="tooltip-trigger" aria-label={`Erklärung zu ${key}`} aria-describedby={tooltipId}>?</button>
+              <span className="tooltip-content" id={tooltipId} role="tooltip">{help.description}</span>
+            </span>}</span>
+            <strong>{value}{help?.unit && <small> {help.unit}</small>}</strong>
+          </div>;
+        })}
       </div>}
     </section></div></>;
 }

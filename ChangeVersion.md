@@ -1,5 +1,12 @@
 # Versionshistorie
 
+## 0.4.2 – 2026-07-30
+
+- Berechnete Geometrie- und Gewichtswerte mit erklärenden, zugänglichen
+  Tooltips ergänzt.
+- Einheiten werden direkt an den berechneten Werten angezeigt.
+- Tooltip-Bedienung für Maus, Tastatur und Touch umgesetzt.
+
 ## 0.4.1 – 2026-07-30
 
 - Motorabstand Mitte–Mitte und Motorabstand von der lokalen Flügelvorderkante
