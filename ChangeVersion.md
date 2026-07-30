@@ -1,5 +1,15 @@
 # Versionshistorie
 
+## 0.4.0 – 2026-07-30
+
+- Interaktive 3D-Modellvorschau mit React Three Fiber und Three.js ergänzt.
+- Flügelgeometrie berücksichtigt Spannweite, Pfeilung, Zuspitzung und V-Form;
+  Rumpf und Motorpositionen werden zur Orientierung vereinfacht dargestellt.
+- Umschaltung zwischen 2D und 3D sowie Perspektiv- und Draufsicht umgesetzt.
+- Orbit-Steuerung, Zoom und optionale Auto-Drehung ergänzt.
+- 3D-Engine wird als eigener, verzögert geladener Chunk ausgeliefert, damit
+  Anmeldung und Verwaltung schnell starten.
+
 ## 0.3.0 – 2026-07-30
 
 - Sicherer Loader für repository-interne Geometrie-Plugins mit Manifest,

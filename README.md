@@ -9,8 +9,8 @@ Der erste Anwendungsfall ist ein einfacher zweimotoriger FPV-Flieger mit einem
 Zielgewicht unter 250 g. Weitere Modelltypen werden über vertrauenswürdige,
 serverseitig installierte Geometrie-Plugins ergänzt.
 
-> **Projektstatus:** frühe Projektphase / Grundgerüst. Die Anwendung ist noch
-> nicht lauffähig.
+> **Projektstatus:** frühe, lauffähige Projektphase. Anmeldung, Profil- und
+> Benutzerverwaltung, Profilbibliothek sowie 2D-/3D-Modellvorschau sind nutzbar.
 
 ## Ziele des MVP
 
@@ -101,7 +101,7 @@ Formatierungsregeln und CSS-Konventionen festzulegen.
 
 ## Lokale Entwicklung
 
-Der schnellste Testweg für Version 0.3.0 ist Docker:
+Der schnellste Testweg für Version 0.4.0 ist Docker:
 
 ```bash
 docker compose up --build -d

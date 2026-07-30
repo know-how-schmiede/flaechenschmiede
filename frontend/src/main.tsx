@@ -1,9 +1,10 @@
-import React, { FormEvent, useEffect, useState } from "react";
+import React, { FormEvent, Suspense, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Airfoil, AirfoilKind, api, GeometryPlugin, ModelParameters, PluginEvaluation, Role, setCsrf, Theme, User } from "./api";
 import "./styles.css";
 
 type Auth = { user: User; csrf_token: string };
+const ModelPreview3D = React.lazy(() => import("./ModelPreview3D").then(module => ({ default: module.ModelPreview3D })));
 
 function Login({ onLogin }: { onLogin: (auth: Auth) => void }) {
   const [error, setError] = useState("");
@@ -33,7 +34,7 @@ function Login({ onLogin }: { onLogin: (auth: Auth) => void }) {
       <label>E-Mail-Adresse<input name="email" type="email" autoComplete="email" required /></label>
       <label>Passwort<input name="password" type="password" autoComplete="current-password" minLength={8} required /></label>
       <button className="primary" disabled={busy}>{busy ? "Anmeldung läuft …" : "Anmelden"}</button>
-      <small>Version 0.3.0</small>
+      <small>Version 0.4.0</small>
     </form></section>
   </main>;
 }
@@ -41,7 +42,7 @@ function Login({ onLogin }: { onLogin: (auth: Auth) => void }) {
 function Shell({ user, onUser, onLogout }: { user: User; onUser: (u: User) => void; onLogout: () => void }) {
   const [view, setView] = useState<"designer" | "airfoils" | "profile" | "users">("designer");
   return <div className="shell"><aside>
-    <div className="brand"><span className="brand-mark">FS</span><span><strong>FlächenSchmiede</strong><small>Version 0.3.0</small></span></div>
+    <div className="brand"><span className="brand-mark">FS</span><span><strong>FlächenSchmiede</strong><small>Version 0.4.0</small></span></div>
     <nav><button className={view === "designer" ? "active" : ""} onClick={() => setView("designer")}>Modell-Konfigurator</button>
       <button className={view === "airfoils" ? "active" : ""} onClick={() => setView("airfoils")}>Tragflächenprofile</button>
       <button className={view === "profile" ? "active" : ""} onClick={() => setView("profile")}>Mein Profil</button>
@@ -145,6 +146,9 @@ function ModelDesigner() {
   const [plugin, setPlugin] = useState<GeometryPlugin | null>(null);
   const [parameters, setParameters] = useState<ModelParameters | null>(null);
   const [evaluation, setEvaluation] = useState<PluginEvaluation | null>(null);
+  const [preview, setPreview] = useState<"2d" | "3d">("3d");
+  const [cameraView, setCameraView] = useState<"perspective" | "top">("perspective");
+  const [autoRotate, setAutoRotate] = useState(false);
   const [error, setError] = useState("");
   useEffect(() => {
     api<GeometryPlugin[]>("/plugins").then(list => {
@@ -175,7 +179,7 @@ function ModelDesigner() {
   if (!parameters) return <><header><p className="eyebrow">Geometrie</p><h1>Modell-Konfigurator</h1></header>
     <div className="card">{error || "Keine Geometrie-Plugins verfügbar."}</div></>;
   return <><header><p className="eyebrow">Geometrie-Plugin</p><h1>Modell-Konfigurator</h1>
-    <p className="muted">Parameter einstellen, serverseitig validieren und unmittelbar als Draufsicht prüfen.</p></header>
+    <p className="muted">Parameter einstellen, serverseitig validieren und unmittelbar in 2D und 3D prüfen.</p></header>
     {error && <div className="alert error">{error}</div>}
     <div className="designer-grid"><form className="card parameter-panel" onSubmit={calculate}>
       <label>Modelltyp<select value={plugin?.manifest.id} onChange={e => choosePlugin(e.target.value)}>
@@ -193,9 +197,22 @@ function ModelDesigner() {
         <label>Zielgewicht (g)<input type="number" value={parameters.weight.targetG} min="1" onChange={e => setWeight("targetG", Number(e.target.value))} /></label>
         <label>Reserve (g)<input type="number" value={parameters.weight.reserveG} min="0" onChange={e => setWeight("reserveG", Number(e.target.value))} /></label>
       </div><button className="primary">Berechnen und prüfen</button>
-    </form><section className="card model-result"><div className="section-title"><div><p className="eyebrow">Draufsicht</p><h2>{plugin?.manifest.name}</h2></div>
+    </form><section className="card model-result"><div className="section-title"><div><p className="eyebrow">{preview === "3d" ? "3D-Vorschau" : "Draufsicht"}</p><h2>{plugin?.manifest.name}</h2></div>
       <span className="version-chip">Plugin {plugin?.manifest.version}</span></div>
-      <PlanformPreview evaluation={evaluation} />
+      <div className="preview-toolbar" aria-label="Vorschauoptionen">
+        <div className="segmented"><button type="button" className={preview === "3d" ? "active" : ""} onClick={() => setPreview("3d")}>3D</button>
+          <button type="button" className={preview === "2d" ? "active" : ""} onClick={() => setPreview("2d")}>2D</button></div>
+        {preview === "3d" && <div className="preview-actions">
+          <button type="button" className="secondary compact" onClick={() => setCameraView(cameraView === "top" ? "perspective" : "top")}>
+            {cameraView === "top" ? "Perspektive" : "Draufsicht"}</button>
+          <button type="button" className={`secondary compact ${autoRotate ? "selected" : ""}`} aria-pressed={autoRotate}
+            onClick={() => setAutoRotate(value => !value)}>Auto-Drehung</button>
+        </div>}
+      </div>
+      {preview === "3d" ? <Suspense fallback={<div className="model-empty">3D-Ansicht wird geladen …</div>}>
+        <ModelPreview3D evaluation={evaluation} view={cameraView} autoRotate={autoRotate} />
+      </Suspense>
+        : <PlanformPreview evaluation={evaluation} />}
       <div className="validation-list">{evaluation?.messages.map(message => <div key={message.code} className={`validation ${message.severity}`}>{message.message}</div>)}</div>
       {evaluation && Object.keys(evaluation.calculations).length > 0 && <div className="calculation-grid">
         {Object.entries(evaluation.calculations).map(([key, value]) => <div key={key}><span>{key}</span><strong>{value}</strong></div>)}

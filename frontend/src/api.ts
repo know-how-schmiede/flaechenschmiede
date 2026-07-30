@@ -23,7 +23,7 @@ export type PluginEvaluation = {
   parameters: ModelParameters;
   messages: Array<{ severity: "info" | "warning" | "error"; code: string; message: string; path: string }>;
   calculations: Record<string, number>;
-  geometry: { unit?: string; wingOutline?: number[][]; motorPositions?: number[][] };
+  geometry: { unit?: string; view?: string; wingOutline?: number[][]; motorPositions?: number[][] };
 };
 
 let csrfToken = "";
