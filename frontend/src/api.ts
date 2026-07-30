@@ -10,6 +10,21 @@ export type Airfoil = {
   coordinates: number[][]; parameters: Record<string, number | string>;
   is_active: boolean; created_at: string;
 };
+export type GeometryPlugin = {
+  manifest: { id: string; name: string; version: string; description: string };
+  schema: Record<string, unknown>;
+  presets: Array<{ name: string; parameters: ModelParameters }>;
+};
+export type ModelParameters = {
+  wing: { spanMm: number; rootChordMm: number; tipChordMm: number; sweepDeg: number; dihedralDeg: number };
+  weight: { targetG: number; reserveG: number };
+};
+export type PluginEvaluation = {
+  parameters: ModelParameters;
+  messages: Array<{ severity: "info" | "warning" | "error"; code: string; message: string; path: string }>;
+  calculations: Record<string, number>;
+  geometry: { unit?: string; wingOutline?: number[][]; motorPositions?: number[][] };
+};
 
 let csrfToken = "";
 export const setCsrf = (token: string) => { csrfToken = token; };

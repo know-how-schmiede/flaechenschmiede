@@ -1,6 +1,6 @@
 import React, { FormEvent, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Airfoil, AirfoilKind, api, Role, setCsrf, Theme, User } from "./api";
+import { Airfoil, AirfoilKind, api, GeometryPlugin, ModelParameters, PluginEvaluation, Role, setCsrf, Theme, User } from "./api";
 import "./styles.css";
 
 type Auth = { user: User; csrf_token: string };
@@ -33,22 +33,24 @@ function Login({ onLogin }: { onLogin: (auth: Auth) => void }) {
       <label>E-Mail-Adresse<input name="email" type="email" autoComplete="email" required /></label>
       <label>Passwort<input name="password" type="password" autoComplete="current-password" minLength={8} required /></label>
       <button className="primary" disabled={busy}>{busy ? "Anmeldung läuft …" : "Anmelden"}</button>
-      <small>Version 0.2.0</small>
+      <small>Version 0.3.0</small>
     </form></section>
   </main>;
 }
 
 function Shell({ user, onUser, onLogout }: { user: User; onUser: (u: User) => void; onLogout: () => void }) {
-  const [view, setView] = useState<"airfoils" | "profile" | "users">("airfoils");
+  const [view, setView] = useState<"designer" | "airfoils" | "profile" | "users">("designer");
   return <div className="shell"><aside>
-    <div className="brand"><span className="brand-mark">FS</span><span><strong>FlächenSchmiede</strong><small>Version 0.2.0</small></span></div>
-    <nav><button className={view === "airfoils" ? "active" : ""} onClick={() => setView("airfoils")}>Tragflächenprofile</button>
+    <div className="brand"><span className="brand-mark">FS</span><span><strong>FlächenSchmiede</strong><small>Version 0.3.0</small></span></div>
+    <nav><button className={view === "designer" ? "active" : ""} onClick={() => setView("designer")}>Modell-Konfigurator</button>
+      <button className={view === "airfoils" ? "active" : ""} onClick={() => setView("airfoils")}>Tragflächenprofile</button>
       <button className={view === "profile" ? "active" : ""} onClick={() => setView("profile")}>Mein Profil</button>
       {user.role === "admin" && <button className={view === "users" ? "active" : ""} onClick={() => setView("users")}>Benutzerverwaltung</button>}</nav>
     <div className="account"><span className="avatar">{user.display_name.slice(0, 2).toUpperCase()}</span>
       <span><strong>{user.display_name}</strong><small>{user.role === "admin" ? "Administrator" : "Benutzer"}</small></span></div>
     <button className="ghost" onClick={onLogout}>Abmelden</button>
   </aside><div className="content">
+    {view === "designer" && <ModelDesigner />}
     {view === "airfoils" && <Airfoils user={user} />}
     {view === "profile" && <Profile user={user} onUser={onUser} />}
     {view === "users" && user.role === "admin" && <Users />}
@@ -111,6 +113,94 @@ function Users() {
         <td><select value={u.role} onChange={e => update(u, e.target.value as Role, u.is_active)}><option value="user">Benutzer</option><option value="admin">Administrator</option></select></td>
         <td><button className={`status ${u.is_active ? "active" : ""}`} onClick={() => update(u, u.role, !u.is_active)}>{u.is_active ? "Aktiv" : "Inaktiv"}</button></td>
         <td>{new Date(u.created_at).toLocaleDateString("de-DE")}</td></tr>)}</tbody></table></section></>;
+}
+
+function PlanformPreview({ evaluation }: { evaluation: PluginEvaluation | null }) {
+  const outline = evaluation?.geometry.wingOutline || [];
+  if (!outline.length) return <div className="model-empty">Parameter berechnen, um die Draufsicht anzuzeigen.</div>;
+  const xs = outline.map(point => point[0]); const ys = outline.map(point => point[1]);
+  const minX = Math.min(...xs); const maxX = Math.max(...xs);
+  const minY = Math.min(...ys); const maxY = Math.max(...ys);
+  const scale = Math.min(520 / Math.max(maxX - minX, 1), 300 / Math.max(maxY - minY, 1));
+  const mapPoint = (point: number[]) => [
+    40 + (point[0] - minX) * scale,
+    170 - ((point[1] - (minY + maxY) / 2) * scale),
+  ];
+  const path = outline.map((point, index) => {
+    const [x, y] = mapPoint(point);
+    return `${index ? "L" : "M"} ${x.toFixed(1)} ${y.toFixed(1)}`;
+  }).join(" ") + " Z";
+  return <svg className="planform-preview" viewBox="0 0 600 340" role="img" aria-label="Draufsicht des Flugmodells">
+    <line x1="20" y1="170" x2="580" y2="170" className="axis" />
+    <path d={path} />
+    {(evaluation?.geometry.motorPositions || []).map((point, index) => {
+      const [x, y] = mapPoint(point);
+      return <g key={index}><circle cx={x} cy={y} r="10" /><line x1={x - 14} y1={y} x2={x + 14} y2={y} /></g>;
+    })}
+  </svg>;
+}
+
+function ModelDesigner() {
+  const [plugins, setPlugins] = useState<GeometryPlugin[]>([]);
+  const [plugin, setPlugin] = useState<GeometryPlugin | null>(null);
+  const [parameters, setParameters] = useState<ModelParameters | null>(null);
+  const [evaluation, setEvaluation] = useState<PluginEvaluation | null>(null);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    api<GeometryPlugin[]>("/plugins").then(list => {
+      setPlugins(list); setPlugin(list[0] || null);
+      setParameters(list[0]?.presets[0]?.parameters || null);
+    }).catch(e => setError(e.message));
+  }, []);
+  const setWing = (key: keyof ModelParameters["wing"], value: number) => {
+    setParameters(current => current ? { ...current, wing: { ...current.wing, [key]: value } } : current);
+  };
+  const setWeight = (key: keyof ModelParameters["weight"], value: number) => {
+    setParameters(current => current ? { ...current, weight: { ...current.weight, [key]: value } } : current);
+  };
+  async function calculate(event?: FormEvent) {
+    event?.preventDefault();
+    if (!plugin || !parameters) return;
+    try {
+      const result = await api<PluginEvaluation>(`/plugins/${plugin.manifest.id}/evaluate`, {
+        method: "POST", body: JSON.stringify({ parameters }),
+      });
+      setEvaluation(result); setError("");
+    } catch (e) { setError((e as Error).message); }
+  }
+  function choosePlugin(id: string) {
+    const next = plugins.find(item => item.manifest.id === id) || null;
+    setPlugin(next); setParameters(next?.presets[0]?.parameters || null); setEvaluation(null);
+  }
+  if (!parameters) return <><header><p className="eyebrow">Geometrie</p><h1>Modell-Konfigurator</h1></header>
+    <div className="card">{error || "Keine Geometrie-Plugins verfügbar."}</div></>;
+  return <><header><p className="eyebrow">Geometrie-Plugin</p><h1>Modell-Konfigurator</h1>
+    <p className="muted">Parameter einstellen, serverseitig validieren und unmittelbar als Draufsicht prüfen.</p></header>
+    {error && <div className="alert error">{error}</div>}
+    <div className="designer-grid"><form className="card parameter-panel" onSubmit={calculate}>
+      <label>Modelltyp<select value={plugin?.manifest.id} onChange={e => choosePlugin(e.target.value)}>
+        {plugins.map(item => <option key={item.manifest.id} value={item.manifest.id}>{item.manifest.name}</option>)}
+      </select></label>
+      <div className="preset-row">{plugin?.presets.map(preset => <button type="button" className="secondary compact" key={preset.name}
+        onClick={() => { setParameters(preset.parameters); setEvaluation(null); }}>{preset.name}</button>)}</div>
+      <h2>Tragfläche</h2><div className="field-pair">
+        <label>Spannweite (mm)<input type="number" value={parameters.wing.spanMm} min="100" onChange={e => setWing("spanMm", Number(e.target.value))} /></label>
+        <label>Wurzeltiefe (mm)<input type="number" value={parameters.wing.rootChordMm} min="20" onChange={e => setWing("rootChordMm", Number(e.target.value))} /></label>
+        <label>Randtiefe (mm)<input type="number" value={parameters.wing.tipChordMm} min="20" onChange={e => setWing("tipChordMm", Number(e.target.value))} /></label>
+        <label>Pfeilung (°)<input type="number" value={parameters.wing.sweepDeg} step=".5" onChange={e => setWing("sweepDeg", Number(e.target.value))} /></label>
+        <label>V-Form (°)<input type="number" value={parameters.wing.dihedralDeg} step=".5" onChange={e => setWing("dihedralDeg", Number(e.target.value))} /></label>
+      </div><h2>Gewicht</h2><div className="field-pair">
+        <label>Zielgewicht (g)<input type="number" value={parameters.weight.targetG} min="1" onChange={e => setWeight("targetG", Number(e.target.value))} /></label>
+        <label>Reserve (g)<input type="number" value={parameters.weight.reserveG} min="0" onChange={e => setWeight("reserveG", Number(e.target.value))} /></label>
+      </div><button className="primary">Berechnen und prüfen</button>
+    </form><section className="card model-result"><div className="section-title"><div><p className="eyebrow">Draufsicht</p><h2>{plugin?.manifest.name}</h2></div>
+      <span className="version-chip">Plugin {plugin?.manifest.version}</span></div>
+      <PlanformPreview evaluation={evaluation} />
+      <div className="validation-list">{evaluation?.messages.map(message => <div key={message.code} className={`validation ${message.severity}`}>{message.message}</div>)}</div>
+      {evaluation && Object.keys(evaluation.calculations).length > 0 && <div className="calculation-grid">
+        {Object.entries(evaluation.calculations).map(([key, value]) => <div key={key}><span>{key}</span><strong>{value}</strong></div>)}
+      </div>}
+    </section></div></>;
 }
 
 const kindLabels: Record<AirfoilKind, string> = {

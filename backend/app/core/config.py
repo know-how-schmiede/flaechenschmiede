@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     session_cookie_samesite: str = "lax"
     session_lifetime_hours: int = 24
     cors_origins: str = "http://localhost:5173"
+    plugin_directory: str = "plugins"
 
     @property
     def parsed_cors_origins(self) -> list[str]:

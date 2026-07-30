@@ -1,5 +1,16 @@
 # Versionshistorie
 
+## 0.3.0 – 2026-07-30
+
+- Sicherer Loader für repository-interne Geometrie-Plugins mit Manifest,
+  Einstiegspunkten, Parameterschema und Presets ergänzt.
+- `twin-fpv-sub250` berechnet Flügelfläche, Streckung, Zuspitzung, mittlere
+  aerodynamische Flügeltiefe, Flächenbelastung und Gewichtsreserve.
+- Strukturierte Hinweise, Warnungen und Fehler für Modellparameter umgesetzt.
+- Serverseitige Draufsicht-Geometrie mit Motorpositionen ergänzt.
+- Plugin-API und interaktiver Modell-Konfigurator mit Presets und SVG-Draufsicht
+  implementiert.
+
 ## 0.2.0 – 2026-07-30
 
 - Versionierte Profilbibliothek mit klassischem DAT-Import ergänzt.

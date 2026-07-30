@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://flaechenschmiede.local/schemas/plugins/twin-fpv-sub250/0.0.0",
+  "$id": "https://flaechenschmiede.local/schemas/plugins/twin-fpv-sub250/0.1.0",
   "title": "Twin FPV Sub-250 parameters",
   "type": "object",
   "additionalProperties": false,

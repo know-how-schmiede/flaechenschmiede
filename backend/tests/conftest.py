@@ -2,6 +2,7 @@ import os
 
 os.environ["DATABASE_URL"] = "sqlite:///./test.db"
 os.environ["APP_SECRET_KEY"] = "test-secret-key-with-at-least-32-characters"
+os.environ["PLUGIN_DIRECTORY"] = "../plugins"
 
 import pytest
 from fastapi.testclient import TestClient

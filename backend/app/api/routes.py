@@ -14,13 +14,16 @@ from app.core.config import get_settings
 from app.core.database import get_db
 from app.models.airfoil import Airfoil, AirfoilKind
 from app.models.user import AuditEvent, Session, User
+from app.plugins.loader import PluginError, PluginRegistry
 from app.schemas.airfoil import AirfoilCreate, AirfoilOut, AirfoilStatusUpdate
+from app.schemas.plugin import PluginDefinitionOut, PluginEvaluateIn, PluginEvaluationOut
 from app.schemas.user import (
     LoginIn, PasswordUpdate, ProfileUpdate, UserAdminUpdate, UserCreate, UserOut,
 )
 from app.version import __version__
 
 router = APIRouter(prefix="/api/v1")
+plugin_registry = PluginRegistry()
 
 
 def audit(db: DbSession, actor: User, action: str, target_id: UUID | None, details: dict | None = None):
@@ -190,3 +193,31 @@ def update_airfoil_status(
     audit(db, admin.user, "airfoil.status_updated", airfoil.id, payload.model_dump())
     db.commit()
     return airfoil
+
+
+@router.get("/plugins", response_model=list[PluginDefinitionOut])
+def list_plugins(_: Session = Depends(get_current_session)):
+    try:
+        return [plugin.public_definition() for plugin in plugin_registry.list()]
+    except PluginError as exc:
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, str(exc)) from exc
+
+
+@router.get("/plugins/{plugin_id}", response_model=PluginDefinitionOut)
+def get_plugin(plugin_id: str, _: Session = Depends(get_current_session)):
+    try:
+        return plugin_registry.load(plugin_id).public_definition()
+    except PluginError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
+
+
+@router.post("/plugins/{plugin_id}/evaluate", response_model=PluginEvaluationOut)
+def evaluate_plugin(
+    plugin_id: str,
+    payload: PluginEvaluateIn,
+    _: Session = Depends(require_csrf),
+):
+    try:
+        return plugin_registry.evaluate(plugin_id, payload.parameters)
+    except PluginError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc

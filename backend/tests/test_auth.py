@@ -1,7 +1,7 @@
 def test_health(client):
     response = client.get("/api/v1/health")
     assert response.status_code == 200
-    assert response.json()["version"] == "0.2.0"
+    assert response.json()["version"] == "0.3.0"
 
 
 def test_login_and_profile(admin):
