@@ -58,3 +58,4 @@ fi
 restart_service_if_present "$FS_BACKEND_SERVICE"
 systemctl reload nginx
 log "Update abgeschlossen."
+print_status_summary "Update"

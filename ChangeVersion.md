@@ -9,6 +9,8 @@
 - Profilverwaltung mit responsiver SVG-Konturvorschau im Frontend ergänzt.
 - Betroffene React-Router-Abhängigkeit durch eine kleine interne Navigation
   ersetzt; npm-Audit meldet keine bekannten Schwachstellen mehr.
+- Installation und Update zeigen abschließend Zeit, Server-IP, Ports, URLs,
+  Version, Git-Stand, Dienstzustände, Health-Antwort und wichtige Pfade an.
 
 ## 0.1.7 – 2026-07-30
 
