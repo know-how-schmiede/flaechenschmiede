@@ -174,4 +174,5 @@ systemctl enable --now flaechenschmiede-backend nginx
 
 log "LXC-Installation abgeschlossen."
 log "Ersten Administrator anlegen:"
-log "sudo -u ${FS_APP_USER} env PYTHONPATH=${FS_INSTALL_DIR}:${FS_INSTALL_DIR}/backend ${FS_INSTALL_DIR}/.venv/bin/python -m app.cli"
+log "set -a; source ${FS_ENV_FILE}; set +a"
+log "runuser --user ${FS_APP_USER} -- env PYTHONPATH=${FS_INSTALL_DIR}:${FS_INSTALL_DIR}/backend ${FS_INSTALL_DIR}/.venv/bin/python -m app.cli"

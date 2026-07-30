@@ -1,5 +1,15 @@
 # Versionshistorie
 
+## 0.1.4 – 2026-07-30
+
+- LXC-Hinweis zur Admin-Erstellung lädt nun zuerst die Produktionskonfiguration,
+  sodass die CLI PostgreSQL statt der lokalen SQLite-Vorgabe verwendet.
+
+## 0.1.3 – 2026-07-30
+
+- Hinweis zum Erstellen des ersten Administrators verwendet jetzt `runuser`
+  und funktioniert damit auch in minimalen Debian-LXC ohne `sudo`.
+
 ## 0.1.2 – 2026-07-30
 
 - Neue PostgreSQL-Datenbanken werden im LXC explizit mit UTF-8 angelegt.

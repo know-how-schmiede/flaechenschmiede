@@ -2,7 +2,7 @@
 
 Diese Anleitung richtet sich an Einsteiger. Die Skripte sind für einen
 **unprivilegierten Debian-LXC unter Proxmox** vorbereitet. FlächenSchmiede
-liegt aktuell in Version 0.1.2 vor. Anmeldung, Profil, Benutzerverwaltung,
+liegt aktuell in Version 0.1.4 vor. Anmeldung, Profil, Benutzerverwaltung,
 Backend, Datenbankmigrationen und Dienste werden durch das Setup eingerichtet.
 
 ## Was die Skripte machen
@@ -195,6 +195,24 @@ Falls die Seite nicht erreichbar ist, zuerst Backend und Nginx prüfen:
 systemctl status flaechenschmiede-backend.service --no-pager
 systemctl status nginx --no-pager
 ```
+
+### Ersten Administrator anlegen
+
+Die Admin-CLI benötigt dieselbe Produktionskonfiguration wie der Backend-
+Dienst. Deshalb zuerst die Umgebungsvariablen laden und anschließend die CLI
+als Anwendungsbenutzer starten:
+
+```bash
+set -a
+source /etc/flaechenschmiede/flaechenschmiede.env
+set +a
+runuser --user flaechenschmiede -- env \
+  PYTHONPATH=/opt/flaechenschmiede:/opt/flaechenschmiede/backend \
+  /opt/flaechenschmiede/.venv/bin/python -m app.cli
+```
+
+E-Mail-Adresse, Anzeigename und ein Passwort mit mindestens zwölf Zeichen
+werden interaktiv abgefragt.
 
 ## 5. Anwendung aktualisieren
 
