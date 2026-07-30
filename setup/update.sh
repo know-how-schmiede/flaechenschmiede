@@ -29,27 +29,23 @@ log "Lade Änderungen für Branch ${branch}."
 run_as_app_user git -C "$FS_INSTALL_DIR" fetch --prune origin
 run_as_app_user git -C "$FS_INSTALL_DIR" merge --ff-only "origin/${branch}"
 
-if [[ -f "${FS_INSTALL_DIR}/backend/requirements.lock" ]]; then
-  log "Installiere gesperrte Backend-Abhängigkeiten."
-  run_as_app_user "${FS_INSTALL_DIR}/.venv/bin/python" -m pip install \
-    --require-hashes \
-    -r "${FS_INSTALL_DIR}/backend/requirements.lock"
-else
-  log "Backend-Lockdatei noch nicht vorhanden; Abhängigkeiten übersprungen."
-fi
+log "Aktualisiere Backend-Abhängigkeiten."
+run_as_app_user "${FS_INSTALL_DIR}/.venv/bin/python" -m pip install \
+  "${FS_INSTALL_DIR}/backend"
 
 if [[ -x "${FS_INSTALL_DIR}/.venv/bin/alembic" ]] &&
   [[ -f "${FS_INSTALL_DIR}/backend/alembic.ini" ]]; then
   load_environment
-  run_as_app_user "${FS_INSTALL_DIR}/.venv/bin/alembic" \
+  run_as_app_user env PYTHONPATH="${FS_INSTALL_DIR}:${FS_INSTALL_DIR}/backend" \
+    "${FS_INSTALL_DIR}/.venv/bin/alembic" \
     -c "${FS_INSTALL_DIR}/backend/alembic.ini" upgrade head
 else
   log "Alembic noch nicht eingerichtet; Migrationen übersprungen."
 fi
 
-if [[ -f "${FS_INSTALL_DIR}/frontend/package-lock.json" ]]; then
+if [[ -f "${FS_INSTALL_DIR}/frontend/package.json" ]]; then
   require_command npm
-  run_as_app_user npm --prefix "${FS_INSTALL_DIR}/frontend" ci
+  run_as_app_user npm --prefix "${FS_INSTALL_DIR}/frontend" install --no-package-lock
   run_as_app_user npm --prefix "${FS_INSTALL_DIR}/frontend" run build
 else
   log "Frontend-Lockdatei noch nicht vorhanden; Build übersprungen."

@@ -1,0 +1,23 @@
+[Unit]
+Description=Flächenschmiede Backend
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=flaechenschmiede
+Group=flaechenschmiede
+WorkingDirectory=/opt/flaechenschmiede
+EnvironmentFile=/etc/flaechenschmiede/flaechenschmiede.env
+Environment=PYTHONPATH=/opt/flaechenschmiede:/opt/flaechenschmiede/backend
+ExecStart=/opt/flaechenschmiede/.venv/bin/uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --proxy-headers
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/flaechenschmiede
+
+[Install]
+WantedBy=multi-user.target

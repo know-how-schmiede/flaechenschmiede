@@ -101,13 +101,32 @@ Formatierungsregeln und CSS-Konventionen festzulegen.
 
 ## Lokale Entwicklung
 
-Die Entwicklungsumgebung wird in Phase 0 eingerichtet. Geplant sind:
+Der schnellste Testweg für Version 0.1.0 ist Docker:
 
-1. PostgreSQL über `compose.yaml` starten.
-2. Backend-Abhängigkeiten aus `backend/pyproject.toml` installieren.
-3. Datenbankmigrationen ausführen und FastAPI starten.
-4. Frontend-Abhängigkeiten aus `frontend/package.json` installieren und Vite
-   starten.
+```bash
+docker compose up --build -d
+docker compose exec backend python -m app.cli
+```
+
+Die Oberfläche ist anschließend unter `http://localhost:5173`, die
+API-Dokumentation unter `http://localhost:8000/docs` erreichbar. Der zweite
+Befehl legt interaktiv den ersten Administrator an.
+
+### Installation in einem Debian-LXC
+
+In einem frischen, unprivilegierten Debian-LXC:
+
+```bash
+git clone <REPOSITORY-URL> /tmp/flaechenschmiede-installer
+cd /tmp/flaechenschmiede-installer
+sudo ./setup/install.sh --repository <REPOSITORY-URL> --branch main
+```
+
+Das Skript installiert PostgreSQL, Python, Node.js, Nginx und den
+systemd-Dienst, erzeugt zufällige Zugangsdaten, migriert die Datenbank und baut
+das Frontend. Am Ende wird der Befehl zum Anlegen des ersten Administrators
+ausgegeben. Vor öffentlichem Betrieb sind HTTPS einzurichten und
+`SESSION_COOKIE_SECURE=true` zu setzen.
 
 Schemaänderungen ohne Migration gelten als unvollständig und werden nicht
 übernommen.

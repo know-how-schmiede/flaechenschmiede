@@ -14,6 +14,28 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+  backend:
+    build:
+      context: .
+      dockerfile: deployment/backend.Dockerfile
+    environment:
+      APP_ENV: development
+      APP_SECRET_KEY: development-only-change-before-production
+      DATABASE_URL: postgresql+psycopg://flaechenschmiede:development-only@db:5432/flaechenschmiede
+      CORS_ORIGINS: http://localhost:5173
+    command: >
+      sh -c "alembic -c backend/alembic.ini upgrade head &&
+             uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port 8000"
+    ports: ["8000:8000"]
+    depends_on:
+      db:
+        condition: service_healthy
+  frontend:
+    build:
+      context: .
+      dockerfile: deployment/frontend.Dockerfile
+    ports: ["5173:80"]
+    depends_on: [backend]
 
 volumes:
   postgres-data:

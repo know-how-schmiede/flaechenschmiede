@@ -81,8 +81,9 @@ fi
 log "Installiere Systempakete."
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y \
-  ca-certificates curl git nginx postgresql python3 python3-venv \
-  python3-pip rsync
+  ca-certificates curl git nginx openssl postgresql python3 python3-venv \
+  python3-pip rsync nodejs npm
+systemctl enable --now postgresql
 
 if ! getent group "$FS_APP_GROUP" >/dev/null; then
   groupadd --system "$FS_APP_GROUP"
@@ -112,12 +113,57 @@ log "Klone Branch ${branch} nach ${FS_INSTALL_DIR}."
 run_as_app_user git clone --branch "$branch" --single-branch \
   "$repository_url" "$FS_INSTALL_DIR"
 
+environment_created=false
 if [[ ! -f "$FS_ENV_FILE" ]]; then
   install -o root -g "$FS_APP_GROUP" -m 0640 \
     "${FS_INSTALL_DIR}/.env.example" "$FS_ENV_FILE"
+  environment_created=true
   log "Konfiguration angelegt: ${FS_ENV_FILE}"
   log "WICHTIG: Geheimnisse und Produktionswerte müssen dort noch angepasst werden."
 fi
 
-log "LXC-Grundinstallation abgeschlossen."
-log "Backend, Frontend, Nginx und systemd werden aktiviert, sobald deren Implementierung vorliegt."
+if $environment_created; then
+  log "Richte PostgreSQL-Datenbank und Produktionskonfiguration ein."
+  db_password="$(openssl rand -hex 24)"
+  secret_key="$(openssl rand -hex 32)"
+  runuser --user postgres -- psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='flaechenschmiede'" | grep -q 1 ||
+    runuser --user postgres -- psql -c "CREATE ROLE flaechenschmiede LOGIN PASSWORD '${db_password}'"
+  runuser --user postgres -- psql -c "ALTER ROLE flaechenschmiede PASSWORD '${db_password}'"
+  runuser --user postgres -- psql -tAc "SELECT 1 FROM pg_database WHERE datname='flaechenschmiede'" | grep -q 1 ||
+    runuser --user postgres -- createdb --owner=flaechenschmiede flaechenschmiede
+  sed -i \
+    -e "s|^APP_SECRET_KEY=.*|APP_SECRET_KEY=${secret_key}|" \
+    -e "s|^DATABASE_URL=.*|DATABASE_URL=postgresql+psycopg://flaechenschmiede:${db_password}@localhost:5432/flaechenschmiede|" \
+    -e "s|^APP_ENV=.*|APP_ENV=production|" \
+    -e "s|^CORS_ORIGINS=.*|CORS_ORIGINS=http://localhost|" \
+    "$FS_ENV_FILE"
+else
+  log "Vorhandene Konfiguration und Datenbank-Zugangsdaten werden beibehalten."
+fi
+
+log "Installiere Backend und führe Migrationen aus."
+run_as_app_user python3 -m venv "${FS_INSTALL_DIR}/.venv"
+run_as_app_user "${FS_INSTALL_DIR}/.venv/bin/pip" install "${FS_INSTALL_DIR}/backend"
+load_environment
+run_as_app_user env PYTHONPATH="${FS_INSTALL_DIR}:${FS_INSTALL_DIR}/backend" \
+  "${FS_INSTALL_DIR}/.venv/bin/alembic" -c "${FS_INSTALL_DIR}/backend/alembic.ini" upgrade head
+
+log "Baue Frontend."
+run_as_app_user npm --prefix "${FS_INSTALL_DIR}/frontend" install --no-package-lock
+run_as_app_user npm --prefix "${FS_INSTALL_DIR}/frontend" run build
+
+install -o root -g root -m 0644 \
+  "${FS_INSTALL_DIR}/deployment/systemd/flaechenschmiede-backend.service" \
+  /etc/systemd/system/flaechenschmiede-backend.service
+install -o root -g root -m 0644 \
+  "${FS_INSTALL_DIR}/deployment/nginx/flaechenschmiede.conf" \
+  /etc/nginx/sites-available/flaechenschmiede
+ln -sfn /etc/nginx/sites-available/flaechenschmiede /etc/nginx/sites-enabled/flaechenschmiede
+rm -f /etc/nginx/sites-enabled/default
+nginx -t
+systemctl daemon-reload
+systemctl enable --now flaechenschmiede-backend nginx
+
+log "LXC-Installation abgeschlossen."
+log "Ersten Administrator anlegen:"
+log "sudo -u ${FS_APP_USER} env PYTHONPATH=${FS_INSTALL_DIR}:${FS_INSTALL_DIR}/backend ${FS_INSTALL_DIR}/.venv/bin/python -m app.cli"
