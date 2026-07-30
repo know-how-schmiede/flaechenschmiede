@@ -2,9 +2,8 @@
 
 Diese Anleitung richtet sich an Einsteiger. Die Skripte sind für einen
 **unprivilegierten Debian-LXC unter Proxmox** vorbereitet. FlächenSchmiede
-befindet sich noch im Aufbau: Das Grundsystem kann vorbereitet werden, Backend,
-Frontend, Datenbankmigrationen und Dienste werden aber erst mit der jeweiligen
-Entwicklungsphase vollständig aktiviert.
+liegt aktuell in Version 0.1.1 vor. Anmeldung, Profil, Benutzerverwaltung,
+Backend, Datenbankmigrationen und Dienste werden durch das Setup eingerichtet.
 
 ## Was die Skripte machen
 
@@ -140,9 +139,10 @@ Anschließend die erzeugte Konfiguration öffnen:
 nano /etc/flaechenschmiede/flaechenschmiede.env
 ```
 
-Mindestens `APP_SECRET_KEY`, Datenbankzugang und Produktionsoptionen müssen vor
-dem späteren Produktivstart angepasst werden. Einen zufälligen Secret-Key
-erzeugen:
+Das Installationsskript erzeugt bei einer neuen Installation automatisch einen
+zufälligen `APP_SECRET_KEY` und Datenbankzugang. Die Produktionsoptionen müssen
+vor einem öffentlichen Betrieb trotzdem geprüft werden. Einen neuen Secret-Key
+kann man bei Bedarf so erzeugen:
 
 ```bash
 openssl rand -hex 32
@@ -150,6 +150,51 @@ openssl rand -hex 32
 
 Den ausgegebenen Wert in die Konfigurationsdatei kopieren. Die Datei selbst
 darf nicht in Git eingecheckt werden.
+
+### IP-Adresse des Containers ermitteln
+
+Direkt im LXC-Container zeigt dieser Befehl die zugewiesenen IP-Adressen:
+
+```bash
+hostname -I
+```
+
+Eine übersichtliche Ausgabe mit Netzwerkschnittstellen liefert:
+
+```bash
+ip -br address
+```
+
+Normalerweise ist die IPv4-Adresse am Interface `eth0` relevant, zum Beispiel:
+
+```text
+eth0    UP    192.168.178.45/24
+```
+
+Die Anwendung ist dann von einem Rechner im selben Netzwerk erreichbar:
+
+```text
+http://192.168.178.45
+```
+
+Alternativ lässt sich die IP auf dem Proxmox-Host abfragen:
+
+```bash
+pct exec <CONTAINER-ID> -- hostname -I
+```
+
+Beispiel für den Container mit der ID `105`:
+
+```bash
+pct exec 105 -- hostname -I
+```
+
+Falls die Seite nicht erreichbar ist, zuerst Backend und Nginx prüfen:
+
+```bash
+systemctl status flaechenschmiede-backend.service --no-pager
+systemctl status nginx --no-pager
+```
 
 ## 5. Anwendung aktualisieren
 
