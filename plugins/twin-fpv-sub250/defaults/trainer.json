@@ -12,6 +12,10 @@
     "weight": {
       "targetG": 249,
       "reserveG": 15
+    },
+    "propulsion": {
+      "motorSpacingMm": 360,
+      "leadingEdgeOffsetMm": 55
     }
   }
 }

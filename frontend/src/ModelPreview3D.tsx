@@ -42,14 +42,14 @@ function Aircraft({ evaluation }: { evaluation: PluginEvaluation }) {
   return <group scale={scale} rotation={[0, Math.PI, 0]}>
     <WingHalf side={1} halfSpan={halfSpan} rootChord={rootChord} tipChord={tipChord} sweep={sweep} dihedral={dihedral} />
     <WingHalf side={-1} halfSpan={halfSpan} rootChord={rootChord} tipChord={tipChord} sweep={sweep} dihedral={dihedral} />
-    <mesh position={[0, 8, rootChord * .12]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+    <mesh position={[0, 8, -rootChord * .5]} rotation={[Math.PI / 2, 0, 0]} castShadow>
       <capsuleGeometry args={[rootChord * .075, rootChord * .72, 6, 16]} />
       <meshStandardMaterial color="#25354a" roughness={.45} />
     </mesh>
     {(evaluation.geometry.motorPositions || []).map((point, index) => {
       const side = Math.sign(point[1]) || 1;
       const height = Math.tan(THREE.MathUtils.degToRad(dihedral)) * Math.abs(point[1]);
-      return <group key={index} position={[point[1], height + 14, point[0] - rootChord / 2]}
+      return <group key={index} position={[point[1], height + 14, -point[0]]}
         rotation={[0, 0, side * THREE.MathUtils.degToRad(dihedral)]}>
         <mesh rotation={[Math.PI / 2, 0, 0]} castShadow>
           <cylinderGeometry args={[18, 22, 34, 20]} />

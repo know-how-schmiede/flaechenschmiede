@@ -18,6 +18,7 @@ export type GeometryPlugin = {
 export type ModelParameters = {
   wing: { spanMm: number; rootChordMm: number; tipChordMm: number; sweepDeg: number; dihedralDeg: number };
   weight: { targetG: number; reserveG: number };
+  propulsion: { motorSpacingMm: number; leadingEdgeOffsetMm: number };
 };
 export type PluginEvaluation = {
   parameters: ModelParameters;

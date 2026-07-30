@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://flaechenschmiede.local/schemas/plugins/twin-fpv-sub250/0.1.0",
+  "$id": "https://flaechenschmiede.local/schemas/plugins/twin-fpv-sub250/0.1.1",
   "title": "Twin FPV Sub-250 parameters",
   "type": "object",
   "additionalProperties": false,
@@ -25,7 +25,16 @@
         "reserveG": { "type": "number", "minimum": 0 }
       },
       "required": ["targetG", "reserveG"]
+    },
+    "propulsion": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "motorSpacingMm": { "type": "number", "exclusiveMinimum": 0 },
+        "leadingEdgeOffsetMm": { "type": "number", "minimum": 0 }
+      },
+      "required": ["motorSpacingMm", "leadingEdgeOffsetMm"]
     }
   },
-  "required": ["wing", "weight"]
+  "required": ["wing", "weight", "propulsion"]
 }

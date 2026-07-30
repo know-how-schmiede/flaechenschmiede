@@ -2,7 +2,7 @@
 
 Diese Anleitung richtet sich an Einsteiger. Die Skripte sind für einen
 **unprivilegierten Debian-LXC unter Proxmox** vorbereitet. FlächenSchmiede
-liegt aktuell in Version 0.4.0 vor. Anmeldung, Profil, Benutzerverwaltung,
+liegt aktuell in Version 0.4.1 vor. Anmeldung, Profil, Benutzerverwaltung,
 Backend, Datenbankmigrationen und Dienste werden durch das Setup eingerichtet.
 
 ## Was die Skripte machen

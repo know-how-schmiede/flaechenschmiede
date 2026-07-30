@@ -34,7 +34,7 @@ function Login({ onLogin }: { onLogin: (auth: Auth) => void }) {
       <label>E-Mail-Adresse<input name="email" type="email" autoComplete="email" required /></label>
       <label>Passwort<input name="password" type="password" autoComplete="current-password" minLength={8} required /></label>
       <button className="primary" disabled={busy}>{busy ? "Anmeldung läuft …" : "Anmelden"}</button>
-      <small>Version 0.4.0</small>
+      <small>Version 0.4.1</small>
     </form></section>
   </main>;
 }
@@ -42,7 +42,7 @@ function Login({ onLogin }: { onLogin: (auth: Auth) => void }) {
 function Shell({ user, onUser, onLogout }: { user: User; onUser: (u: User) => void; onLogout: () => void }) {
   const [view, setView] = useState<"designer" | "airfoils" | "profile" | "users">("designer");
   return <div className="shell"><aside>
-    <div className="brand"><span className="brand-mark">FS</span><span><strong>FlächenSchmiede</strong><small>Version 0.4.0</small></span></div>
+    <div className="brand"><span className="brand-mark">FS</span><span><strong>FlächenSchmiede</strong><small>Version 0.4.1</small></span></div>
     <nav><button className={view === "designer" ? "active" : ""} onClick={() => setView("designer")}>Modell-Konfigurator</button>
       <button className={view === "airfoils" ? "active" : ""} onClick={() => setView("airfoils")}>Tragflächenprofile</button>
       <button className={view === "profile" ? "active" : ""} onClick={() => setView("profile")}>Mein Profil</button>
@@ -162,6 +162,9 @@ function ModelDesigner() {
   const setWeight = (key: keyof ModelParameters["weight"], value: number) => {
     setParameters(current => current ? { ...current, weight: { ...current.weight, [key]: value } } : current);
   };
+  const setPropulsion = (key: keyof ModelParameters["propulsion"], value: number) => {
+    setParameters(current => current ? { ...current, propulsion: { ...current.propulsion, [key]: value } } : current);
+  };
   async function calculate(event?: FormEvent) {
     event?.preventDefault();
     if (!plugin || !parameters) return;
@@ -196,6 +199,11 @@ function ModelDesigner() {
       </div><h2>Gewicht</h2><div className="field-pair">
         <label>Zielgewicht (g)<input type="number" value={parameters.weight.targetG} min="1" onChange={e => setWeight("targetG", Number(e.target.value))} /></label>
         <label>Reserve (g)<input type="number" value={parameters.weight.reserveG} min="0" onChange={e => setWeight("reserveG", Number(e.target.value))} /></label>
+      </div><h2>Motorposition</h2><div className="field-pair">
+        <label>Motorabstand Mitte–Mitte (mm)<input type="number" value={parameters.propulsion.motorSpacingMm} min="1"
+          max={parameters.wing.spanMm - 1} onChange={e => setPropulsion("motorSpacingMm", Number(e.target.value))} /></label>
+        <label>Abstand von Vorderkante (mm)<input type="number" value={parameters.propulsion.leadingEdgeOffsetMm} min="0"
+          onChange={e => setPropulsion("leadingEdgeOffsetMm", Number(e.target.value))} /></label>
       </div><button className="primary">Berechnen und prüfen</button>
     </form><section className="card model-result"><div className="section-title"><div><p className="eyebrow">{preview === "3d" ? "3D-Vorschau" : "Draufsicht"}</p><h2>{plugin?.manifest.name}</h2></div>
       <span className="version-chip">Plugin {plugin?.manifest.version}</span></div>

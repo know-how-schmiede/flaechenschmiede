@@ -1,5 +1,13 @@
 # Versionshistorie
 
+## 0.4.1 – 2026-07-30
+
+- Motorabstand Mitte–Mitte und Motorabstand von der lokalen Flügelvorderkante
+  als konfigurierbare Plugin-Parameter ergänzt.
+- Motorpositionen werden serverseitig für gepfeilte und zugespitzte Flügel
+  berechnet und gegen Spannweite sowie lokale Flügeltiefe validiert.
+- Einstellbare Motorpositionen in die 2D- und 3D-Vorschau übernommen.
+
 ## 0.4.0 – 2026-07-30
 
 - Interaktive 3D-Modellvorschau mit React Three Fiber und Three.js ergänzt.

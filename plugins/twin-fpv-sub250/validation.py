@@ -10,6 +10,7 @@ def validate(parameters: dict) -> list[dict]:
     try:
         wing = parameters["wing"]
         weight = parameters["weight"]
+        propulsion = parameters["propulsion"]
         span = float(wing["spanMm"])
         root = float(wing["rootChordMm"])
         tip = float(wing["tipChordMm"])
@@ -17,6 +18,8 @@ def validate(parameters: dict) -> list[dict]:
         dihedral = float(wing.get("dihedralDeg", 0))
         target = float(weight["targetG"])
         reserve = float(weight["reserveG"])
+        motor_spacing = float(propulsion["motorSpacingMm"])
+        leading_edge_offset = float(propulsion["leadingEdgeOffsetMm"])
     except (KeyError, TypeError, ValueError):
         return [_message("error", "invalid-parameters",
                          "Pflichtparameter fehlen oder sind ungültig.", "$")]
@@ -25,6 +28,7 @@ def validate(parameters: dict) -> list[dict]:
         (root, "wing.rootChordMm", "Wurzeltiefe"),
         (tip, "wing.tipChordMm", "Randtiefe"),
         (target, "weight.targetG", "Zielgewicht"),
+        (motor_spacing, "propulsion.motorSpacingMm", "Motorabstand"),
     ):
         if value <= 0:
             messages.append(_message("error", "positive-required",
@@ -48,6 +52,18 @@ def validate(parameters: dict) -> list[dict]:
         messages.append(_message("warning", "dihedral-range",
                                  "V-Form außerhalb des empfohlenen Bereichs 0–12°.",
                                  "wing.dihedralDeg"))
+    if motor_spacing >= span:
+        messages.append(_message("error", "motor-spacing",
+                                 "Motorabstand muss kleiner als die Spannweite sein.",
+                                 "propulsion.motorSpacingMm"))
+    else:
+        motor_fraction = motor_spacing / span
+        local_chord = root + (tip - root) * motor_fraction
+        if leading_edge_offset < 0 or leading_edge_offset > local_chord:
+            messages.append(_message(
+                "error", "motor-leading-edge-offset",
+                f"Abstand zur Vorderkante muss an dieser Position zwischen 0 und {local_chord:.1f} mm liegen.",
+                "propulsion.leadingEdgeOffsetMm"))
     if reserve >= target:
         messages.append(_message("error", "weight-reserve",
                                  "Gewichtsreserve muss kleiner als das Zielgewicht sein.",
