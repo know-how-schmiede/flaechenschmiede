@@ -12,6 +12,7 @@ readonly FS_INSTALL_DIR="${FS_INSTALL_DIR:-/opt/flaechenschmiede}"
 readonly FS_DATA_DIR="${FS_DATA_DIR:-/var/lib/flaechenschmiede}"
 readonly FS_CONFIG_DIR="${FS_CONFIG_DIR:-/etc/flaechenschmiede}"
 readonly FS_ENV_FILE="${FS_ENV_FILE:-${FS_CONFIG_DIR}/flaechenschmiede.env}"
+readonly FS_FRONTEND_DIR="${FS_FRONTEND_DIR:-/var/www/flaechenschmiede}"
 readonly FS_BACKEND_SERVICE="${FS_BACKEND_SERVICE:-flaechenschmiede-backend.service}"
 
 log() {

@@ -47,9 +47,14 @@ if [[ -f "${FS_INSTALL_DIR}/frontend/package.json" ]]; then
   require_command npm
   run_as_app_user npm --prefix "${FS_INSTALL_DIR}/frontend" install --no-package-lock
   run_as_app_user npm --prefix "${FS_INSTALL_DIR}/frontend" run build
+  install -d -o root -g www-data -m 0755 "$FS_FRONTEND_DIR"
+  rsync -a --delete "${FS_INSTALL_DIR}/frontend/dist/" "${FS_FRONTEND_DIR}/"
+  chown -R root:www-data "$FS_FRONTEND_DIR"
+  chmod -R u=rwX,g=rX,o=rX "$FS_FRONTEND_DIR"
 else
   log "Frontend-Lockdatei noch nicht vorhanden; Build übersprungen."
 fi
 
 restart_service_if_present "$FS_BACKEND_SERVICE"
+systemctl reload nginx
 log "Update abgeschlossen."

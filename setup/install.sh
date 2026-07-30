@@ -159,6 +159,10 @@ run_as_app_user env PYTHONPATH="${FS_INSTALL_DIR}:${FS_INSTALL_DIR}/backend" \
 log "Baue Frontend."
 run_as_app_user npm --prefix "${FS_INSTALL_DIR}/frontend" install --no-package-lock
 run_as_app_user npm --prefix "${FS_INSTALL_DIR}/frontend" run build
+install -d -o root -g www-data -m 0755 "$FS_FRONTEND_DIR"
+rsync -a --delete "${FS_INSTALL_DIR}/frontend/dist/" "${FS_FRONTEND_DIR}/"
+chown -R root:www-data "$FS_FRONTEND_DIR"
+chmod -R u=rwX,g=rX,o=rX "$FS_FRONTEND_DIR"
 
 install -o root -g root -m 0644 \
   "${FS_INSTALL_DIR}/deployment/systemd/flaechenschmiede-backend.service" \
@@ -170,7 +174,9 @@ ln -sfn /etc/nginx/sites-available/flaechenschmiede /etc/nginx/sites-enabled/fla
 rm -f /etc/nginx/sites-enabled/default
 nginx -t
 systemctl daemon-reload
-systemctl enable --now flaechenschmiede-backend nginx
+systemctl enable --now flaechenschmiede-backend
+systemctl enable nginx
+systemctl restart nginx
 
 log "LXC-Installation abgeschlossen."
 log "Ersten Administrator anlegen:"

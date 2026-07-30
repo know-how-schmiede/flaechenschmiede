@@ -34,14 +34,14 @@ function Login({ onLogin }: { onLogin: (auth: Auth) => void }) {
       <label>E-Mail-Adresse<input name="email" type="email" autoComplete="email" required /></label>
       <label>Passwort<input name="password" type="password" autoComplete="current-password" minLength={8} required /></label>
       <button className="primary" disabled={busy}>{busy ? "Anmeldung läuft …" : "Anmelden"}</button>
-      <small>Version 0.1.4</small>
+      <small>Version 0.1.6</small>
     </form></section>
   </main>;
 }
 
 function Shell({ user, onUser, onLogout }: { user: User; onUser: (u: User) => void; onLogout: () => void }) {
   return <div className="shell"><aside>
-    <div className="brand"><span className="brand-mark">FS</span><span><strong>FlächenSchmiede</strong><small>Version 0.1.4</small></span></div>
+    <div className="brand"><span className="brand-mark">FS</span><span><strong>FlächenSchmiede</strong><small>Version 0.1.6</small></span></div>
     <nav><NavLink to="/profile">Profil</NavLink>{user.role === "admin" && <NavLink to="/admin/users">Benutzerverwaltung</NavLink>}</nav>
     <div className="account"><span className="avatar">{user.display_name.slice(0, 2).toUpperCase()}</span>
       <span><strong>{user.display_name}</strong><small>{user.role === "admin" ? "Administrator" : "Benutzer"}</small></span></div>

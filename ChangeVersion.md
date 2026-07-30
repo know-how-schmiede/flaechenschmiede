@@ -1,5 +1,17 @@
 # Versionshistorie
 
+## 0.1.6 – 2026-07-30
+
+- Gebautes Frontend wird getrennt vom geschützten Anwendungscode unter
+  `/var/www/flaechenschmiede` für Nginx bereitgestellt.
+- Update-Ablauf synchronisiert Frontend-Dateien und lädt Nginx anschließend
+  neu.
+
+## 0.1.5 – 2026-07-30
+
+- Nginx wird nach Installation der Anwendungskonfiguration explizit neu
+  gestartet, damit nicht die bereits geladene Debian-Startseite aktiv bleibt.
+
 ## 0.1.4 – 2026-07-30
 
 - LXC-Hinweis zur Admin-Erstellung lädt nun zuerst die Produktionskonfiguration,
